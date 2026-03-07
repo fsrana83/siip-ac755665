@@ -21,9 +21,14 @@ const Login = () => {
     <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px]" />
 
-      <div className="relative z-10 flex items-center gap-12 px-6 animate-fade-in">
-        {/* Login Card */}
-        <div className="glass-card p-8 w-[380px]">
+      <div className="relative z-10 flex items-center animate-fade-in">
+        {/* Logo on left */}
+        <div className="w-[300px] h-[420px] overflow-hidden rounded-l-lg">
+          <img src={logo} alt="SmartIdeas Insurance Portals" className="w-full h-full object-cover" />
+        </div>
+
+        {/* Login Card on right */}
+        <div className="glass-card rounded-l-none p-8 w-[380px] h-[420px] flex flex-col justify-center">
           <h2 className="text-lg font-semibold text-foreground mb-6 text-center">Sign In</h2>
           
           <form onSubmit={handleSubmit} className="space-y-5">
@@ -63,13 +68,6 @@ const Login = () => {
           <p className="text-xs text-muted-foreground text-center mt-6">
             Demo: admin / admin123
           </p>
-        </div>
-
-        {/* Logo on right */}
-        <div className="text-center">
-          <img src={logo} alt="SmartIdeas Insurance Portals" className="w-48 h-48 object-contain mx-auto mb-4" />
-          <h1 className="text-2xl font-display font-bold text-foreground">SmartIdeas</h1>
-          <p className="text-sm text-muted-foreground mt-1 tracking-widest uppercase">Insurance Portals LLC</p>
         </div>
       </div>
     </div>
