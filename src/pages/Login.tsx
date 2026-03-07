@@ -19,23 +19,11 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
-      {/* Background glow effects */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px]" />
-      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-primary/3 rounded-full blur-[100px]" />
 
-      <div className="relative z-10 w-full max-w-md px-6 animate-fade-in">
-        {/* Logo & Branding */}
-        <div className="text-center mb-8">
-          <div className="flex justify-center mb-6">
-            <img src={logo} alt="SmartIdeas Insurance Portals" className="w-32 h-32 object-contain" />
-          </div>
-          <h1 className="text-2xl font-display font-bold text-foreground">SmartIdeas</h1>
-          <p className="text-sm text-muted-foreground mt-1 tracking-widest uppercase">Insurance Portals LLC</p>
-          <p className="text-xs text-muted-foreground mt-2 italic">Individual Life Policy Premium Calculator</p>
-        </div>
-
+      <div className="relative z-10 flex items-center gap-12 px-6 animate-fade-in">
         {/* Login Card */}
-        <div className="glass-card p-8">
+        <div className="glass-card p-8 w-[380px]">
           <h2 className="text-lg font-semibold text-foreground mb-6 text-center">Sign In</h2>
           
           <form onSubmit={handleSubmit} className="space-y-5">
@@ -75,6 +63,13 @@ const Login = () => {
           <p className="text-xs text-muted-foreground text-center mt-6">
             Demo: admin / admin123
           </p>
+        </div>
+
+        {/* Logo on right */}
+        <div className="text-center">
+          <img src={logo} alt="SmartIdeas Insurance Portals" className="w-48 h-48 object-contain mx-auto mb-4" />
+          <h1 className="text-2xl font-display font-bold text-foreground">SmartIdeas</h1>
+          <p className="text-sm text-muted-foreground mt-1 tracking-widest uppercase">Insurance Portals LLC</p>
         </div>
       </div>
     </div>
