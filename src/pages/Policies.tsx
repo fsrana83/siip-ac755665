@@ -1,0 +1,49 @@
+import { mockPolicies } from '@/lib/mockData';
+
+const Policies = () => {
+  return (
+    <div className="space-y-6 animate-fade-in">
+      <div>
+        <h1 className="text-2xl font-display font-bold text-foreground">Policies</h1>
+        <p className="text-sm text-muted-foreground mt-1">Active policies and policy register</p>
+      </div>
+
+      <div className="glass-card">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="table-header">
+                <th className="text-left px-4 py-3">Policy No</th>
+                <th className="text-left px-4 py-3">Client</th>
+                <th className="text-left px-4 py-3">Product</th>
+                <th className="text-right px-4 py-3">Sum Assured</th>
+                <th className="text-right px-4 py-3">Premium</th>
+                <th className="text-left px-4 py-3">Commencement</th>
+                <th className="text-left px-4 py-3">Expiry</th>
+                <th className="text-left px-4 py-3">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {mockPolicies.map(p => (
+                <tr key={p.id} className="border-b border-border/30 hover:bg-muted/30 transition-colors">
+                  <td className="px-4 py-3 text-sm font-medium text-primary">{p.policyNo}</td>
+                  <td className="px-4 py-3 text-sm text-foreground">{p.clientName}</td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground">{p.productName}</td>
+                  <td className="px-4 py-3 text-sm text-foreground text-right">OMR {p.sumAssured.toLocaleString()}</td>
+                  <td className="px-4 py-3 text-sm text-foreground text-right">OMR {p.totalPremium.toFixed(3)}</td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground">{p.commencementDate}</td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground">{p.expiryDate}</td>
+                  <td className="px-4 py-3">
+                    <span className="status-active inline-block px-2 py-0.5 rounded-full text-xs font-medium">{p.status}</span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Policies;
