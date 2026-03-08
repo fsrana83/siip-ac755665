@@ -516,7 +516,7 @@ const Admin = () => {
                     <label className="text-sm text-foreground">Active</label>
                   </div>
                   <button type="submit" className="w-full py-2.5 bg-primary text-primary-foreground rounded-lg font-medium text-sm hover:bg-primary/90 flex items-center justify-center gap-2">
-                    <Save className="w-4 h-4" /> Save Product
+                    <Save className="w-4 h-4" /> {isNewProduct ? 'Create Product' : 'Save Product'}
                   </button>
                 </form>
               )}
