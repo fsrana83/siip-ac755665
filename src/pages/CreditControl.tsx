@@ -432,7 +432,8 @@ const CreditControl = () => {
                           <input type="number" value={newCredit.creditDays} min={1} max={365}
                             onChange={e => {
                               const days = Number(e.target.value);
-                              const due = new Date(); due.setDate(due.getDate() + days);
+                              const baseDate = creditProposal?.approvalDate ? new Date(creditProposal.approvalDate) : new Date();
+                              const due = new Date(baseDate); due.setDate(due.getDate() + days);
                               setNewCredit(prev => ({ ...prev, creditDays: days, dueDate: due.toISOString().split('T')[0] }));
                             }}
                             className="w-full px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" />

@@ -62,6 +62,7 @@ export interface Proposal {
   uwDecision: string;
   status: 'Pending UW' | 'UW Approved' | 'Credit Approved' | 'Policy Issued';
   createdAt: string;
+  approvalDate?: string;
   medicalQuestions: MedicalQuestion[];
   uwReview?: UWReview;
   receipts: ReceiptEntry[];
