@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useData } from '@/contexts/DataContext';
 import { PRODUCTS, calculatePremium, calculateAge, PremiumBreakdown } from '@/lib/premiumEngine';
 import { DEFAULT_MEDICAL_QUESTIONS } from '@/lib/medicalQuestions';
+import { useConfig } from '@/contexts/ConfigContext';
 
 const statusStyles: Record<string, string> = {
   Draft: 'status-draft',
