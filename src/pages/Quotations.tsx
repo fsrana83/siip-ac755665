@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useData } from '@/contexts/DataContext';
 import { PRODUCTS, calculatePremium, calculateAge, PremiumBreakdown } from '@/lib/premiumEngine';
 import { DEFAULT_MEDICAL_QUESTIONS } from '@/lib/medicalQuestions';
+import { useConfig } from '@/contexts/ConfigContext';
 
 const statusStyles: Record<string, string> = {
   Draft: 'status-draft',
@@ -18,6 +19,8 @@ const statusStyles: Record<string, string> = {
 const Quotations = () => {
   const [search, setSearch] = useState('');
   const { quotations, setQuotations, clients, setClients, proposals, setProposals } = useData();
+  const { products: configProducts } = useConfig();
+  const activeProducts = configProducts.filter(p => p.active);
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
 
@@ -40,7 +43,7 @@ const Quotations = () => {
   const [medicalStep, setMedicalStep] = useState(0); // 0 = intro, 1 = filling
 
   const selectedClient = clients.find(c => c.clientId === selectedClientId);
-  const selectedProduct = PRODUCTS.find(p => p.id === selectedProductId);
+  const selectedProduct = activeProducts.find(p => p.id === selectedProductId);
   const clientAge = useMemo(() => selectedClient ? calculateAge(selectedClient.dob) : 0, [selectedClient]);
 
   const premium: PremiumBreakdown | null = useMemo(() => {
@@ -248,7 +251,7 @@ const Quotations = () => {
                     <select value={selectedProductId} onChange={e => setSelectedProductId(e.target.value)}
                       className="w-full px-3 py-2.5 bg-muted/50 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50">
                       <option value="">— Select product —</option>
-                      {PRODUCTS.filter(p => p.active).map(p => (
+                      {activeProducts.map(p => (
                         <option key={p.id} value={p.id}>{p.name} (Age {p.minAge}-{p.maxAge}, Term {p.minTerm}-{p.maxTerm}yr)</option>
                       ))}
                     </select>
@@ -289,7 +292,10 @@ const Quotations = () => {
                   <label className="block text-xs text-muted-foreground mb-1">Premium Frequency</label>
                   <select value={premiumFrequency} onChange={e => setPremiumFrequency(e.target.value as PremiumFrequency)}
                     className="w-full px-3 py-2.5 bg-muted/50 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50">
-                    {(['Annual', 'Semi-Annual', 'Quarterly', 'Monthly', 'Single'] as PremiumFrequency[]).map(f => (
+                    {(selectedProduct
+                      ? (selectedProduct as any).allowedFrequencies || ['Annual', 'Semi-Annual', 'Quarterly', 'Monthly', 'Single']
+                      : ['Annual', 'Semi-Annual', 'Quarterly', 'Monthly', 'Single']
+                    ).map((f: PremiumFrequency) => (
                       <option key={f} value={f}>{f}</option>
                     ))}
                   </select>
