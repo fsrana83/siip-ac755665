@@ -1,77 +1,54 @@
 import { useState, useMemo } from 'react';
-import { mockQuotations, mockClients } from '@/lib/mockData';
 import { Quotation, Client } from '@/lib/types';
-import { Plus, Search, UserPlus, Calculator } from 'lucide-react';
+import { Plus, Search, UserPlus, Calculator, Ban, ArrowRight, MoreHorizontal } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
-import { PRODUCTS, calculatePremium, calculateAge, getAgeBand, CalcInput, PremiumBreakdown } from '@/lib/premiumEngine';
+import { useData } from '@/contexts/DataContext';
+import { PRODUCTS, calculatePremium, calculateAge, PremiumBreakdown } from '@/lib/premiumEngine';
 
 const statusStyles: Record<string, string> = {
   Draft: 'status-draft',
   Converted: 'status-active',
+  Void: 'bg-destructive/15 text-destructive border border-destructive/20',
 };
 
 const Quotations = () => {
   const [search, setSearch] = useState('');
-  const [data, setData] = useState<Quotation[]>(mockQuotations);
-  const [clients, setClients] = useState<Client[]>(mockClients);
+  const { quotations, setQuotations, clients, setClients, proposals, setProposals } = useData();
   const [open, setOpen] = useState(false);
-  const [addingClient, setAddingClient] = useState(false);
   const { toast } = useToast();
 
-  // Quotation form state
+  // Form state
   const [selectedClientId, setSelectedClientId] = useState('');
+  const [addingClient, setAddingClient] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState('');
   const [sumAssured, setSumAssured] = useState(100000);
   const [term, setTerm] = useState(10);
   const [healthLoading, setHealthLoading] = useState(0);
   const [includePTD, setIncludePTD] = useState(false);
   const [includeCyber, setIncludeCyber] = useState(false);
-
-  // New client form state
   const [newClient, setNewClient] = useState({ fullName: '', gender: 'Male', dob: '', nationality: 'Omani', idType: 'National ID', idNumber: '', phone: '', email: '' });
 
   const selectedClient = clients.find(c => c.clientId === selectedClientId);
   const selectedProduct = PRODUCTS.find(p => p.id === selectedProductId);
-
-  const clientAge = useMemo(() => {
-    if (!selectedClient) return 0;
-    return calculateAge(selectedClient.dob);
-  }, [selectedClient]);
+  const clientAge = useMemo(() => selectedClient ? calculateAge(selectedClient.dob) : 0, [selectedClient]);
 
   const premium: PremiumBreakdown | null = useMemo(() => {
     if (!selectedProductId || !selectedClient || clientAge < 1) return null;
-    return calculatePremium({
-      productId: selectedProductId,
-      age: clientAge,
-      sumAssured,
-      term,
-      healthLoading,
-      includePTD,
-      includeCyber,
-    });
+    return calculatePremium({ productId: selectedProductId, age: clientAge, sumAssured, term, healthLoading, includePTD, includeCyber });
   }, [selectedProductId, selectedClient, clientAge, sumAssured, term, healthLoading, includePTD, includeCyber]);
 
   const resetForm = () => {
-    setSelectedClientId('');
-    setSelectedProductId('');
-    setSumAssured(100000);
-    setTerm(10);
-    setHealthLoading(0);
-    setIncludePTD(false);
-    setIncludeCyber(false);
-    setAddingClient(false);
+    setSelectedClientId(''); setSelectedProductId(''); setSumAssured(100000); setTerm(10);
+    setHealthLoading(0); setIncludePTD(false); setIncludeCyber(false); setAddingClient(false);
     setNewClient({ fullName: '', gender: 'Male', dob: '', nationality: 'Omani', idType: 'National ID', idNumber: '', phone: '', email: '' });
   };
 
   const handleAddClient = (e: React.FormEvent) => {
     e.preventDefault();
-    const nc: Client = {
-      clientId: `C${String(clients.length + 1).padStart(3, '0')}`,
-      ...newClient,
-      kycStatus: 'Pending',
-    };
+    const nc: Client = { clientId: `C${String(clients.length + 1).padStart(3, '0')}`, ...newClient, kycStatus: 'Pending' };
     setClients(prev => [...prev, nc]);
     setSelectedClientId(nc.clientId);
     setAddingClient(false);
@@ -81,23 +58,36 @@ const Quotations = () => {
   const handleCreateQuotation = () => {
     if (!selectedClient || !selectedProduct || !premium) return;
     const newQ: Quotation = {
-      id: String(data.length + 1),
-      quotRef: `QT-2026-${String(data.length + 1).padStart(4, '0')}`,
+      id: String(quotations.length + 1),
+      quotRef: `QT-2026-${String(quotations.length + 1).padStart(4, '0')}`,
       clientName: selectedClient.fullName,
       productName: selectedProduct.name,
-      sumAssured,
-      totalPremium: premium.annualPremium,
-      status: 'Draft',
-      createdBy: 'admin',
+      sumAssured, totalPremium: premium.annualPremium,
+      status: 'Draft', createdBy: 'admin',
       createdAt: new Date().toISOString().split('T')[0],
     };
-    setData(prev => [...prev, newQ]);
-    setOpen(false);
-    resetForm();
-    toast({ title: 'Quotation created', description: `${newQ.quotRef} — Annual Premium: OMR ${newQ.totalPremium.toFixed(3)}` });
+    setQuotations(prev => [...prev, newQ]);
+    setOpen(false); resetForm();
+    toast({ title: 'Quotation created', description: `${newQ.quotRef} — OMR ${newQ.totalPremium.toFixed(3)}` });
   };
 
-  const filtered = data.filter(q =>
+  const handleVoid = (q: Quotation) => {
+    setQuotations(prev => prev.map(x => x.id === q.id ? { ...x, status: 'Void' as const } : x));
+    toast({ title: 'Quotation voided', description: q.quotRef });
+  };
+
+  const handleConvertToProposal = (q: Quotation) => {
+    const proposalNo = `PP-2026-${String(proposals.length + 1).padStart(4, '0')}`;
+    setProposals(prev => [...prev, {
+      id: String(proposals.length + 1), proposalNo, quotRef: q.quotRef,
+      clientName: q.clientName, uwDecision: 'Pending', status: 'Pending UW' as const,
+      createdAt: new Date().toISOString().split('T')[0],
+    }]);
+    setQuotations(prev => prev.map(x => x.id === q.id ? { ...x, status: 'Converted' as const } : x));
+    toast({ title: 'Converted to proposal', description: `${q.quotRef} → ${proposalNo}` });
+  };
+
+  const filtered = quotations.filter(q =>
     q.clientName.toLowerCase().includes(search.toLowerCase()) ||
     q.quotRef.toLowerCase().includes(search.toLowerCase())
   );
@@ -121,18 +111,15 @@ const Quotations = () => {
                 <Calculator className="w-5 h-5 text-primary" /> New Quotation — Premium Calculator
               </DialogTitle>
             </DialogHeader>
-
             <div className="space-y-6">
-              {/* ─── Step 1: Client Selection ─── */}
+              {/* Step 1: Client */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-semibold text-foreground">1. Select Client</h3>
-                  <button type="button" onClick={() => setAddingClient(!addingClient)}
-                    className="flex items-center gap-1 text-xs text-primary hover:underline">
+                  <button type="button" onClick={() => setAddingClient(!addingClient)} className="flex items-center gap-1 text-xs text-primary hover:underline">
                     <UserPlus className="w-3 h-3" /> {addingClient ? 'Cancel' : 'Add New Client'}
                   </button>
                 </div>
-
                 {addingClient ? (
                   <form onSubmit={handleAddClient} className="grid grid-cols-2 gap-3 p-4 bg-muted/30 border border-border rounded-lg">
                     {[
@@ -154,9 +141,7 @@ const Quotations = () => {
                       </div>
                     ))}
                     <div className="col-span-2">
-                      <button type="submit" className="w-full py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90">
-                        Add Client & Select
-                      </button>
+                      <button type="submit" className="w-full py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90">Add Client & Select</button>
                     </div>
                   </form>
                 ) : (
@@ -164,13 +149,10 @@ const Quotations = () => {
                     className="w-full px-3 py-2.5 bg-muted/50 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50">
                     <option value="">— Select existing client —</option>
                     {clients.map(c => (
-                      <option key={c.clientId} value={c.clientId}>
-                        {c.fullName} ({c.clientId}) — DOB: {c.dob}
-                      </option>
+                      <option key={c.clientId} value={c.clientId}>{c.fullName} ({c.clientId}) — DOB: {c.dob}</option>
                     ))}
                   </select>
                 )}
-
                 {selectedClient && (
                   <div className="flex gap-4 text-xs text-muted-foreground bg-muted/30 p-3 rounded-lg">
                     <span><strong className="text-foreground">Age:</strong> {clientAge}</span>
@@ -181,7 +163,7 @@ const Quotations = () => {
                 )}
               </div>
 
-              {/* ─── Step 2: Product & Coverage ─── */}
+              {/* Step 2: Product */}
               <div className="space-y-3">
                 <h3 className="text-sm font-semibold text-foreground">2. Product & Coverage</h3>
                 <div className="grid grid-cols-2 gap-3">
@@ -200,14 +182,12 @@ const Quotations = () => {
                     <input type="number" value={sumAssured} onChange={e => setSumAssured(Number(e.target.value))}
                       min={selectedProduct?.minSA || 5000} max={selectedProduct?.maxSA || 500000} step={1000}
                       className="w-full px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" />
-                    {selectedProduct && <p className="text-[10px] text-muted-foreground mt-1">Range: {selectedProduct.minSA.toLocaleString()} – {selectedProduct.maxSA.toLocaleString()}</p>}
                   </div>
                   <div>
                     <label className="block text-xs text-muted-foreground mb-1">Term (years)</label>
                     <input type="number" value={term} onChange={e => setTerm(Number(e.target.value))}
                       min={selectedProduct?.minTerm || 1} max={selectedProduct?.maxTerm || 30}
                       className="w-full px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" />
-                    {selectedProduct && <p className="text-[10px] text-muted-foreground mt-1">Range: {selectedProduct.minTerm} – {selectedProduct.maxTerm} years</p>}
                   </div>
                   <div>
                     <label className="block text-xs text-muted-foreground mb-1">Health Loading (%)</label>
@@ -219,8 +199,6 @@ const Quotations = () => {
                     </select>
                   </div>
                 </div>
-
-                {/* Optional covers */}
                 <div className="flex gap-6 p-3 bg-muted/30 border border-border rounded-lg">
                   <div className="flex items-center gap-2">
                     <Switch checked={includePTD} onCheckedChange={setIncludePTD} />
@@ -233,7 +211,7 @@ const Quotations = () => {
                 </div>
               </div>
 
-              {/* ─── Step 3: Premium Breakdown ─── */}
+              {/* Step 3: Breakdown */}
               {premium && (
                 <div className="space-y-3">
                   <h3 className="text-sm font-semibold text-foreground">3. Premium Breakdown</h3>
@@ -265,16 +243,13 @@ const Quotations = () => {
                 </div>
               )}
 
-              {/* Validation messages */}
               {selectedProduct && clientAge > 0 && (clientAge < selectedProduct.minAge || clientAge > selectedProduct.maxAge) && (
                 <p className="text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-lg p-3">
                   Client age ({clientAge}) is outside the eligible range ({selectedProduct.minAge}–{selectedProduct.maxAge}) for {selectedProduct.name}.
                 </p>
               )}
 
-              <button
-                onClick={handleCreateQuotation}
-                disabled={!premium || !selectedClient || !selectedProduct}
+              <button onClick={handleCreateQuotation} disabled={!premium || !selectedClient || !selectedProduct}
                 className="w-full py-3 bg-primary text-primary-foreground rounded-lg font-semibold text-sm hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
                 Create Quotation
               </button>
@@ -303,6 +278,7 @@ const Quotations = () => {
                 <th className="text-right px-4 py-3">Annual Premium</th>
                 <th className="text-left px-4 py-3">Status</th>
                 <th className="text-left px-4 py-3">Date</th>
+                <th className="text-center px-4 py-3">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -317,6 +293,25 @@ const Quotations = () => {
                     <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statusStyles[q.status]}`}>{q.status}</span>
                   </td>
                   <td className="px-4 py-3 text-sm text-muted-foreground">{q.createdAt}</td>
+                  <td className="px-4 py-3 text-center">
+                    {q.status === 'Draft' && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="p-1 rounded hover:bg-muted/50 transition-colors">
+                            <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleConvertToProposal(q)} className="gap-2">
+                            <ArrowRight className="w-4 h-4" /> Convert to Proposal
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleVoid(q)} className="gap-2 text-destructive focus:text-destructive">
+                            <Ban className="w-4 h-4" /> Void Quotation
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
