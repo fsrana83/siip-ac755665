@@ -426,17 +426,30 @@ const Admin = () => {
           {/* Product Edit Dialog */}
           <Dialog open={productDialog} onOpenChange={setProductDialog}>
             <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-              <DialogHeader><DialogTitle>Edit Product — {editProduct?.name}</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle>{isNewProduct ? 'New Product' : `Edit Product — ${editProduct?.name}`}</DialogTitle></DialogHeader>
               {editProduct && (
                 <form onSubmit={(e) => {
                   e.preventDefault();
-                  setProducts(prev => prev.map(p => p.id === editProduct.id ? editProduct : p));
+                  if (!editProduct.name.trim()) return;
+                  if (isNewProduct) {
+                    setProducts(prev => [...prev, editProduct]);
+                    toast({ title: 'Product created', description: `${editProduct.id} — ${editProduct.name}` });
+                  } else {
+                    setProducts(prev => prev.map(p => p.id === editProduct.id ? editProduct : p));
+                    toast({ title: 'Product updated', description: editProduct.name });
+                  }
                   setProductDialog(false);
-                  toast({ title: 'Product updated', description: editProduct.name });
                 }} className="space-y-3">
-                  <div>
-                    <label className="block text-xs text-muted-foreground mb-1">Product Name</label>
-                    <input value={editProduct.name} onChange={e => setEditProduct({ ...editProduct, name: e.target.value })} className={inputClass} />
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs text-muted-foreground mb-1">Product ID</label>
+                      <input value={editProduct.id} onChange={e => isNewProduct ? setEditProduct({ ...editProduct, id: e.target.value }) : undefined}
+                        readOnly={!isNewProduct} className={`${inputClass} ${!isNewProduct ? 'opacity-60' : ''}`} />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-muted-foreground mb-1">Product Name</label>
+                      <input value={editProduct.name} onChange={e => setEditProduct({ ...editProduct, name: e.target.value })} required className={inputClass} placeholder="e.g. Term Life - Special" />
+                    </div>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
