@@ -359,17 +359,136 @@ const Admin = () => {
       )}
 
       {activeTab === 'products' && (
-        <div className="glass-card p-6">
-          <h3 className="text-sm font-semibold text-foreground mb-4">Product Register</h3>
-          <p className="text-sm text-muted-foreground">Product setup with 19 product types, premium rules, eligibility criteria, and rate table management.</p>
-          <div className="mt-4 grid grid-cols-3 gap-4">
-            {['Term Life - Level', 'Term Life - Decreasing', 'Whole Life - Traditional', 'Endowment - Savings', 'Unit-Linked', 'Group Term Life'].map(p => (
-              <div key={p} className="stat-card">
-                <p className="text-sm font-medium text-foreground">{p}</p>
-                <p className="text-xs text-muted-foreground mt-1">Active</p>
-              </div>
-            ))}
+        <div className="space-y-4">
+          <div className="glass-card">
+            <div className="p-4 border-b border-border/50 flex justify-between items-center">
+              <h3 className="text-sm font-semibold text-foreground">Product Register ({products.length} products)</h3>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="table-header">
+                    <th className="text-left px-4 py-3">Product ID</th>
+                    <th className="text-left px-4 py-3">Name</th>
+                    <th className="text-left px-4 py-3">Age Range</th>
+                    <th className="text-left px-4 py-3">Term</th>
+                    <th className="text-left px-4 py-3">SA Range (OMR)</th>
+                    <th className="text-left px-4 py-3">Calc Method</th>
+                    <th className="text-left px-4 py-3">Frequencies</th>
+                    <th className="text-left px-4 py-3">Status</th>
+                    <th className="text-center px-4 py-3">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {products.map(p => (
+                    <tr key={p.id} className="border-b border-border/30 hover:bg-muted/30 transition-colors">
+                      <td className="px-4 py-3 text-sm font-medium text-primary">{p.id}</td>
+                      <td className="px-4 py-3 text-sm text-foreground">{p.name}</td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground">{p.minAge}–{p.maxAge}</td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground">{p.minTerm}–{p.maxTerm} yr</td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground">{p.minSA.toLocaleString()}–{p.maxSA.toLocaleString()}</td>
+                      <td className="px-4 py-3"><span className="px-2 py-0.5 bg-accent text-accent-foreground rounded-full text-xs font-medium">{p.calcMethod}</span></td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground">{p.allowedFrequencies.join(', ')}</td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${p.active ? 'status-active' : 'status-draft'}`}>{p.active ? 'Active' : 'Inactive'}</span>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <button onClick={() => { setEditProduct({ ...p }); setProductDialog(true); }}
+                          className="text-primary hover:text-primary/80"><Edit className="w-4 h-4" /></button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
+
+          {/* Product Edit Dialog */}
+          <Dialog open={productDialog} onOpenChange={setProductDialog}>
+            <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+              <DialogHeader><DialogTitle>Edit Product — {editProduct?.name}</DialogTitle></DialogHeader>
+              {editProduct && (
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  setProducts(prev => prev.map(p => p.id === editProduct.id ? editProduct : p));
+                  setProductDialog(false);
+                  toast({ title: 'Product updated', description: editProduct.name });
+                }} className="space-y-3">
+                  <div>
+                    <label className="block text-xs text-muted-foreground mb-1">Product Name</label>
+                    <input value={editProduct.name} onChange={e => setEditProduct({ ...editProduct, name: e.target.value })} className={inputClass} />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs text-muted-foreground mb-1">Min Age</label>
+                      <input type="number" value={editProduct.minAge} onChange={e => setEditProduct({ ...editProduct, minAge: Number(e.target.value) })} className={inputClass} />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-muted-foreground mb-1">Max Age</label>
+                      <input type="number" value={editProduct.maxAge} onChange={e => setEditProduct({ ...editProduct, maxAge: Number(e.target.value) })} className={inputClass} />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-muted-foreground mb-1">Min Term (yr)</label>
+                      <input type="number" value={editProduct.minTerm} onChange={e => setEditProduct({ ...editProduct, minTerm: Number(e.target.value) })} className={inputClass} />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-muted-foreground mb-1">Max Term (yr)</label>
+                      <input type="number" value={editProduct.maxTerm} onChange={e => setEditProduct({ ...editProduct, maxTerm: Number(e.target.value) })} className={inputClass} />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-muted-foreground mb-1">Min SA (OMR)</label>
+                      <input type="number" value={editProduct.minSA} onChange={e => setEditProduct({ ...editProduct, minSA: Number(e.target.value) })} className={inputClass} />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-muted-foreground mb-1">Max SA (OMR)</label>
+                      <input type="number" value={editProduct.maxSA} onChange={e => setEditProduct({ ...editProduct, maxSA: Number(e.target.value) })} className={inputClass} />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-muted-foreground mb-1">Calculation Method</label>
+                    <select value={editProduct.calcMethod} onChange={e => setEditProduct({ ...editProduct, calcMethod: e.target.value as ProductConfig['calcMethod'] })} className={inputClass}>
+                      <option value="Rate per Mille">Rate per Mille</option>
+                      <option value="Flat Rate">Flat Rate</option>
+                      <option value="Age-Rated">Age-Rated</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-muted-foreground mb-1">Cyber Rate (‰)</label>
+                    <input type="number" step="0.01" value={editProduct.cyberRate} onChange={e => setEditProduct({ ...editProduct, cyberRate: Number(e.target.value) })} className={inputClass} />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-muted-foreground mb-1">Allowed Premium Frequencies</label>
+                    <div className="flex flex-wrap gap-2 mt-1">
+                      {(['Annual', 'Semi-Annual', 'Quarterly', 'Monthly', 'Single'] as PremiumFrequency[]).map(f => (
+                        <label key={f} className="flex items-center gap-1.5 text-sm text-foreground">
+                          <input type="checkbox" checked={editProduct.allowedFrequencies.includes(f)}
+                            onChange={(e) => {
+                              setEditProduct(prev => prev ? {
+                                ...prev,
+                                allowedFrequencies: e.target.checked
+                                  ? [...prev.allowedFrequencies, f]
+                                  : prev.allowedFrequencies.filter(x => x !== f)
+                              } : prev);
+                            }}
+                            className="rounded border-border" />
+                          {f}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input type="checkbox" checked={editProduct.active}
+                      onChange={e => setEditProduct({ ...editProduct, active: e.target.checked })}
+                      className="rounded border-border" />
+                    <label className="text-sm text-foreground">Active</label>
+                  </div>
+                  <button type="submit" className="w-full py-2.5 bg-primary text-primary-foreground rounded-lg font-medium text-sm hover:bg-primary/90 flex items-center justify-center gap-2">
+                    <Save className="w-4 h-4" /> Save Product
+                  </button>
+                </form>
+              )}
+            </DialogContent>
+          </Dialog>
         </div>
       )}
 
