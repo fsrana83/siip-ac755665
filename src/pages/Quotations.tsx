@@ -66,18 +66,20 @@ const Quotations = () => {
 
   const handleCreateQuotation = () => {
     if (!selectedClient || !selectedProduct || !premium) return;
+    const freqPremium = premiumFrequency === 'Single' ? premium.totalPremium : premium.annualPremium / FREQUENCY_DIVISORS[premiumFrequency];
     const newQ: Quotation = {
       id: String(quotations.length + 1),
       quotRef: `QT-2026-${String(quotations.length + 1).padStart(4, '0')}`,
       clientName: selectedClient.fullName,
       productName: selectedProduct.name,
       sumAssured, totalPremium: premium.annualPremium,
+      premiumFrequency,
       status: 'Draft', createdBy: 'admin',
       createdAt: new Date().toISOString().split('T')[0],
     };
     setQuotations(prev => [...prev, newQ]);
     setOpen(false); resetForm();
-    toast({ title: 'Quotation created', description: `${newQ.quotRef} — OMR ${newQ.totalPremium.toFixed(3)}` });
+    toast({ title: 'Quotation created', description: `${newQ.quotRef} — OMR ${newQ.totalPremium.toFixed(3)} (${premiumFrequency})` });
   };
 
   const handleVoid = (q: Quotation) => {
