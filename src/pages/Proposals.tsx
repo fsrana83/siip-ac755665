@@ -59,11 +59,12 @@ const Proposals = () => {
     setCreditDialogOpen(true);
   };
 
-  const clientKycApproved = (() => {
-    if (!uwProposal) return false;
-    const client = getClientDetails(uwProposal.clientName);
+  const getClientKyc = (name: string) => {
+    const client = clients.find(c => c.fullName === name);
     return client?.kycStatus === 'Approved';
-  })();
+  };
+
+  const clientKycApproved = uwProposal ? getClientKyc(uwProposal.clientName) : false;
 
   const canApproveUW = uwReview.clientVerified && uwReview.quotationReviewed && uwReview.documentsChecked && uwReview.medicalReviewed && uwReview.riskRating !== '' && uwReview.riskRating !== 'Declined' && clientKycApproved;
 
