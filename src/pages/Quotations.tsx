@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Quotation, Client, MedicalQuestion } from '@/lib/types';
+import { Quotation, Client, MedicalQuestion, PremiumFrequency, FREQUENCY_DIVISORS } from '@/lib/types';
 import { Plus, Search, UserPlus, Calculator, Ban, ArrowRight, MoreHorizontal, FileText } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
