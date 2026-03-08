@@ -89,4 +89,5 @@ export const TAB_ACCESS: Record<string, UserRole[] | null> = {
   vat: ['admin', 'coo', 'credit', 'actuary', 'manager'],
   reports: null,
   admin: ['admin'],
+  developer: ['admin'],
 };

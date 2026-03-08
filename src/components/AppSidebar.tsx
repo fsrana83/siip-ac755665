@@ -20,6 +20,7 @@ const navItems = [
   { path: '/vat', label: 'VAT Reports', icon: Receipt, tab: 'vat' },
   { path: '/reports', label: 'Reports', icon: FileBarChart, tab: 'reports' },
   { path: '/admin', label: 'Admin Panel', icon: Settings, tab: 'admin' },
+  { path: '/developer', label: 'Developer', icon: Code2, tab: 'developer' },
 ];
 
 const AppSidebar = () => {
