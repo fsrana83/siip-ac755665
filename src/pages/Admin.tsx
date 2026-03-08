@@ -88,6 +88,23 @@ const Admin = () => {
   // Product edit state
   const [productDialog, setProductDialog] = useState(false);
   const [editProduct, setEditProduct] = useState<ProductConfig | null>(null);
+  const [isNewProduct, setIsNewProduct] = useState(false);
+
+  const openNewProduct = () => {
+    setEditProduct({
+      id: `PRD-${String(products.length + 1).padStart(3, '0')}`,
+      name: '',
+      minAge: 18, maxAge: 60, minTerm: 5, maxTerm: 30, minSA: 5000, maxSA: 500000,
+      deathRates: { '18-25': 1.0, '26-30': 1.2, '31-35': 1.5, '36-40': 2.0, '41-45': 2.8, '46-50': 3.8, '51-55': 5.2, '56-60': 7.0 },
+      ptdRates: { '18-25': 0.3, '26-30': 0.4, '31-35': 0.5, '36-40': 0.7, '41-45': 0.9, '46-50': 1.3, '51-55': 1.7, '56-60': 2.3 },
+      cyberRate: 0.3,
+      active: true,
+      allowedFrequencies: ['Annual', 'Semi-Annual', 'Quarterly', 'Monthly'],
+      calcMethod: 'Rate per Mille',
+    });
+    setIsNewProduct(true);
+    setProductDialog(true);
+  };
   // Reinsurance state
   const [riSubTab, setRiSubTab] = useState<'reinsurers' | 'treaties' | 'participants'>('reinsurers');
   const [reinsurers, setReinsurers] = useState<Reinsurer[]>(initialReinsurers);
@@ -363,6 +380,9 @@ const Admin = () => {
           <div className="glass-card">
             <div className="p-4 border-b border-border/50 flex justify-between items-center">
               <h3 className="text-sm font-semibold text-foreground">Product Register ({products.length} products)</h3>
+              <button onClick={openNewProduct} className="flex items-center gap-1 px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90">
+                <Plus className="w-3.5 h-3.5" /> New Product
+              </button>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -393,7 +413,7 @@ const Admin = () => {
                         <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${p.active ? 'status-active' : 'status-draft'}`}>{p.active ? 'Active' : 'Inactive'}</span>
                       </td>
                       <td className="px-4 py-3 text-center">
-                        <button onClick={() => { setEditProduct({ ...p }); setProductDialog(true); }}
+                        <button onClick={() => { setEditProduct({ ...p }); setIsNewProduct(false); setProductDialog(true); }}
                           className="text-primary hover:text-primary/80"><Edit className="w-4 h-4" /></button>
                       </td>
                     </tr>
@@ -406,17 +426,30 @@ const Admin = () => {
           {/* Product Edit Dialog */}
           <Dialog open={productDialog} onOpenChange={setProductDialog}>
             <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-              <DialogHeader><DialogTitle>Edit Product — {editProduct?.name}</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle>{isNewProduct ? 'New Product' : `Edit Product — ${editProduct?.name}`}</DialogTitle></DialogHeader>
               {editProduct && (
                 <form onSubmit={(e) => {
                   e.preventDefault();
-                  setProducts(prev => prev.map(p => p.id === editProduct.id ? editProduct : p));
+                  if (!editProduct.name.trim()) return;
+                  if (isNewProduct) {
+                    setProducts(prev => [...prev, editProduct]);
+                    toast({ title: 'Product created', description: `${editProduct.id} — ${editProduct.name}` });
+                  } else {
+                    setProducts(prev => prev.map(p => p.id === editProduct.id ? editProduct : p));
+                    toast({ title: 'Product updated', description: editProduct.name });
+                  }
                   setProductDialog(false);
-                  toast({ title: 'Product updated', description: editProduct.name });
                 }} className="space-y-3">
-                  <div>
-                    <label className="block text-xs text-muted-foreground mb-1">Product Name</label>
-                    <input value={editProduct.name} onChange={e => setEditProduct({ ...editProduct, name: e.target.value })} className={inputClass} />
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs text-muted-foreground mb-1">Product ID</label>
+                      <input value={editProduct.id} onChange={e => isNewProduct ? setEditProduct({ ...editProduct, id: e.target.value }) : undefined}
+                        readOnly={!isNewProduct} className={`${inputClass} ${!isNewProduct ? 'opacity-60' : ''}`} />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-muted-foreground mb-1">Product Name</label>
+                      <input value={editProduct.name} onChange={e => setEditProduct({ ...editProduct, name: e.target.value })} required className={inputClass} placeholder="e.g. Term Life - Special" />
+                    </div>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
@@ -483,7 +516,7 @@ const Admin = () => {
                     <label className="text-sm text-foreground">Active</label>
                   </div>
                   <button type="submit" className="w-full py-2.5 bg-primary text-primary-foreground rounded-lg font-medium text-sm hover:bg-primary/90 flex items-center justify-center gap-2">
-                    <Save className="w-4 h-4" /> Save Product
+                    <Save className="w-4 h-4" /> {isNewProduct ? 'Create Product' : 'Save Product'}
                   </button>
                 </form>
               )}
