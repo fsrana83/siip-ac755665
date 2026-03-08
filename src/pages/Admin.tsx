@@ -380,6 +380,9 @@ const Admin = () => {
           <div className="glass-card">
             <div className="p-4 border-b border-border/50 flex justify-between items-center">
               <h3 className="text-sm font-semibold text-foreground">Product Register ({products.length} products)</h3>
+              <button onClick={openNewProduct} className="flex items-center gap-1 px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90">
+                <Plus className="w-3.5 h-3.5" /> New Product
+              </button>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full">
