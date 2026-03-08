@@ -88,6 +88,23 @@ const Admin = () => {
   // Product edit state
   const [productDialog, setProductDialog] = useState(false);
   const [editProduct, setEditProduct] = useState<ProductConfig | null>(null);
+  const [isNewProduct, setIsNewProduct] = useState(false);
+
+  const openNewProduct = () => {
+    setEditProduct({
+      id: `PRD-${String(products.length + 1).padStart(3, '0')}`,
+      name: '',
+      minAge: 18, maxAge: 60, minTerm: 5, maxTerm: 30, minSA: 5000, maxSA: 500000,
+      deathRates: { '18-25': 1.0, '26-30': 1.2, '31-35': 1.5, '36-40': 2.0, '41-45': 2.8, '46-50': 3.8, '51-55': 5.2, '56-60': 7.0 },
+      ptdRates: { '18-25': 0.3, '26-30': 0.4, '31-35': 0.5, '36-40': 0.7, '41-45': 0.9, '46-50': 1.3, '51-55': 1.7, '56-60': 2.3 },
+      cyberRate: 0.3,
+      active: true,
+      allowedFrequencies: ['Annual', 'Semi-Annual', 'Quarterly', 'Monthly'],
+      calcMethod: 'Rate per Mille',
+    });
+    setIsNewProduct(true);
+    setProductDialog(true);
+  };
   // Reinsurance state
   const [riSubTab, setRiSubTab] = useState<'reinsurers' | 'treaties' | 'participants'>('reinsurers');
   const [reinsurers, setReinsurers] = useState<Reinsurer[]>(initialReinsurers);
