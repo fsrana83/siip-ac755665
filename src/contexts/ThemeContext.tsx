@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-export type ColorScheme = 'dark-blue' | 'dark-green' | 'orange' | 'red' | 'brown';
+export type ColorScheme = 'dark-blue' | 'dark-green' | 'orange' | 'red' | 'brown' | 'gray';
 
 interface ThemeContextType {
   colorScheme: ColorScheme;
@@ -17,6 +17,7 @@ const COLOR_SCHEMES: Record<ColorScheme, { label: string; primary: string; accen
   'orange': { label: 'Orange', primary: '25 95% 50%', accent: '33 100% 50%', preview: '#f97316' },
   'red': { label: 'Red', primary: '0 72% 45%', accent: '4 90% 58%', preview: '#c62828' },
   'brown': { label: 'Brown', primary: '28 56% 35%', accent: '30 50% 45%', preview: '#8b5e3c' },
+  'gray': { label: 'Gray', primary: '220 9% 46%', accent: '220 9% 56%', preview: '#6b7280' },
 };
 
 export { COLOR_SCHEMES };
