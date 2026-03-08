@@ -71,6 +71,7 @@ export interface Proposal {
   quotRef: string;
   clientName: string;
   uwDecision: string;
+  premiumFrequency: PremiumFrequency;
   status: 'Pending UW' | 'UW Approved' | 'Credit Approved' | 'Policy Issued';
   createdAt: string;
   approvalDate?: string;
