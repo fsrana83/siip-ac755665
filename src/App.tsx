@@ -15,6 +15,7 @@ import Proposals from "@/pages/Proposals";
 import Policies from "@/pages/Policies";
 import Claims from "@/pages/Claims";
 import Reinsurance from "@/pages/Reinsurance";
+import CreditControl from "@/pages/CreditControl";
 import Accounting from "@/pages/Accounting";
 import VATReports from "@/pages/VATReports";
 import Reports from "@/pages/Reports";
