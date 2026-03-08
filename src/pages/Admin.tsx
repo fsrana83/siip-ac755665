@@ -1,7 +1,9 @@
 import { useState } from 'react';
-import { Users, Building2, Receipt, Package, Shield, Plus, Trash2, Edit } from 'lucide-react';
+import { Users, Building2, Receipt, Package, Shield, Plus, Trash2, Edit, History, Save } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
+import { useConfig, COVER_TYPES, ProductConfig } from '@/contexts/ConfigContext';
+import { PremiumFrequency } from '@/lib/types';
 
 const tabs = [
   { id: 'users', label: 'User Management', icon: Users },
