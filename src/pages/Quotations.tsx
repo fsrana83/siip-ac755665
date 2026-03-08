@@ -30,6 +30,7 @@ const Quotations = () => {
   const [healthLoading, setHealthLoading] = useState(0);
   const [includePTD, setIncludePTD] = useState(false);
   const [includeCyber, setIncludeCyber] = useState(false);
+  const [premiumFrequency, setPremiumFrequency] = useState<PremiumFrequency>('Annual');
   const [newClient, setNewClient] = useState({ fullName: '', gender: 'Male', dob: '', nationality: 'Omani', idType: 'National ID', idNumber: '', phone: '', email: '' });
 
   // Convert to Proposal dialog state
