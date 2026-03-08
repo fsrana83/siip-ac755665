@@ -18,17 +18,17 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-[#010c23]">
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-background">
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px]" />
 
-      <div className="relative z-10 flex items-center animate-fade-in">
+      <div className="relative z-10 flex items-center animate-fade-in shadow-2xl shadow-foreground/10 rounded-lg">
         {/* Logo on left */}
         <div className="w-[300px] h-[420px] overflow-hidden rounded-l-lg">
           <img src={logo} alt="SmartIdeas Insurance Portals" className="w-full h-full object-cover" />
         </div>
 
         {/* Login Card on right */}
-        <div className="glass-card rounded-l-none p-8 w-[380px] h-[420px] flex flex-col justify-center">
+        <div className="bg-card border border-border rounded-r-lg rounded-l-none p-8 w-[380px] h-[420px] flex flex-col justify-center">
           <h2 className="text-lg font-semibold text-foreground mb-6 text-center">Sign In</h2>
           
           <form onSubmit={handleSubmit} className="space-y-5">
