@@ -75,7 +75,19 @@ const initialParticipants: TreatyParticipant[] = [
 const Admin = () => {
   const [activeTab, setActiveTab] = useState('users');
   const { toast } = useToast();
+  const { vatEntries, currentVATRate, addVATChange, products, setProducts } = useConfig();
 
+  // VAT state
+  const [vatDialog, setVatDialog] = useState(false);
+  const [vatCoverType, setVatCoverType] = useState('');
+  const [vatNewRate, setVatNewRate] = useState('');
+  const [vatEffectiveDate, setVatEffectiveDate] = useState('');
+  const [vatHistoryDialog, setVatHistoryDialog] = useState(false);
+  const [vatHistoryCover, setVatHistoryCover] = useState('');
+
+  // Product edit state
+  const [productDialog, setProductDialog] = useState(false);
+  const [editProduct, setEditProduct] = useState<ProductConfig | null>(null);
   // Reinsurance state
   const [riSubTab, setRiSubTab] = useState<'reinsurers' | 'treaties' | 'participants'>('reinsurers');
   const [reinsurers, setReinsurers] = useState<Reinsurer[]>(initialReinsurers);
