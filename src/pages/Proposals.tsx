@@ -59,7 +59,13 @@ const Proposals = () => {
     setCreditDialogOpen(true);
   };
 
-  const canApproveUW = uwReview.clientVerified && uwReview.quotationReviewed && uwReview.documentsChecked && uwReview.medicalReviewed && uwReview.riskRating !== '' && uwReview.riskRating !== 'Declined';
+  const clientKycApproved = (() => {
+    if (!uwProposal) return false;
+    const client = getClientDetails(uwProposal.clientName);
+    return client?.kycStatus === 'Approved';
+  })();
+
+  const canApproveUW = uwReview.clientVerified && uwReview.quotationReviewed && uwReview.documentsChecked && uwReview.medicalReviewed && uwReview.riskRating !== '' && uwReview.riskRating !== 'Declined' && clientKycApproved;
 
   const handleUWApprove = () => {
     if (!uwProposal) return;
