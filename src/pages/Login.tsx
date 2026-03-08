@@ -18,7 +18,7 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-[#010c23]">
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px]" />
 
       <div className="relative z-10 flex items-center animate-fade-in">
@@ -39,8 +39,8 @@ const Login = () => {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className="w-full px-4 py-2.5 bg-muted/50 border border-border rounded-lg text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all"
-                placeholder="Enter username"
-              />
+                placeholder="Enter username" />
+              
             </div>
             <div>
               <label className="block text-sm text-muted-foreground mb-1.5">Password</label>
@@ -49,18 +49,18 @@ const Login = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-4 py-2.5 bg-muted/50 border border-border rounded-lg text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all"
-                placeholder="Enter password"
-              />
+                placeholder="Enter password" />
+              
             </div>
 
-            {error && (
-              <p className="text-destructive text-sm text-center">{error}</p>
-            )}
+            {error &&
+            <p className="text-destructive text-sm text-center">{error}</p>
+            }
 
             <button
               type="submit"
-              className="w-full py-2.5 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 transition-all glow-border"
-            >
+              className="w-full py-2.5 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 transition-all glow-border">
+              
               Sign In
             </button>
           </form>
@@ -70,8 +70,8 @@ const Login = () => {
           </p>
         </div>
       </div>
-    </div>
-  );
+    </div>);
+
 };
 
 export default Login;
