@@ -28,6 +28,7 @@ const Policies = () => {
       id: String(policies.length + 1), policyNo, proposalNo: proposal.proposalNo,
       clientName: proposal.clientName, productName: quot?.productName || 'N/A',
       sumAssured: quot?.sumAssured || 0, totalPremium: quot?.totalPremium || 0,
+      premiumFrequency: proposal.premiumFrequency,
       commencementDate: today, expiryDate: expiry.toISOString().split('T')[0], status: 'Active' as const,
     }]);
     setProposals(prev => prev.map(p => p.id === proposalId ? { ...p, status: 'Policy Issued' as const } : p));
