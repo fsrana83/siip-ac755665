@@ -357,8 +357,7 @@ const CreditControl = () => {
                       <div className="grid grid-cols-2 gap-3">
                         <div>
                           <label className="block text-xs text-muted-foreground mb-1">Receipt No</label>
-                          <input type="text" value={newReceipt.receiptNo} onChange={e => setNewReceipt(prev => ({ ...prev, receiptNo: e.target.value }))} placeholder="REC-2026-0001"
-                            className="w-full px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                          <div className="w-full px-3 py-2 bg-muted/30 border border-border rounded-lg text-sm text-primary font-medium">{nextReceiptNo}</div>
                         </div>
                         <div>
                           <label className="block text-xs text-muted-foreground mb-1">Date</label>
