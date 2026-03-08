@@ -258,26 +258,103 @@ const Admin = () => {
       )}
 
       {activeTab === 'vat' && (
-        <div className="glass-card p-6">
-          <h3 className="text-sm font-semibold text-foreground mb-4">VAT Rates by Cover Type</h3>
-          <table className="w-full">
-            <thead>
-              <tr className="table-header">
-                <th className="text-left px-4 py-3">Cover Type</th>
-                <th className="text-right px-4 py-3">VAT Rate (%)</th>
-                <th className="text-left px-4 py-3">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {['Death', 'PTD', 'Cyber', 'All Covers', 'Commission', 'Govt Fee'].map(cover => (
-                <tr key={cover} className="border-b border-border/30">
-                  <td className="px-4 py-3 text-sm text-foreground">{cover}</td>
-                  <td className="px-4 py-3 text-sm text-foreground text-right">5.000%</td>
-                  <td className="px-4 py-3"><span className="status-active inline-block px-2 py-0.5 rounded-full text-xs font-medium">Active</span></td>
+        <div className="space-y-4">
+          <div className="glass-card">
+            <div className="p-4 border-b border-border/50 flex justify-between items-center">
+              <h3 className="text-sm font-semibold text-foreground">VAT Rates by Cover Type</h3>
+              <button onClick={() => { setVatDialog(true); setVatCoverType(COVER_TYPES[0]); setVatNewRate(''); setVatEffectiveDate(''); }}
+                className="flex items-center gap-1 px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90">
+                <Edit className="w-3.5 h-3.5" /> Change VAT Rate
+              </button>
+            </div>
+            <table className="w-full">
+              <thead>
+                <tr className="table-header">
+                  <th className="text-left px-4 py-3">Cover Type</th>
+                  <th className="text-right px-4 py-3">Current Rate (%)</th>
+                  <th className="text-left px-4 py-3">Status</th>
+                  <th className="text-center px-4 py-3">History</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {COVER_TYPES.map(cover => (
+                  <tr key={cover} className="border-b border-border/30">
+                    <td className="px-4 py-3 text-sm text-foreground">{cover}</td>
+                    <td className="px-4 py-3 text-sm text-foreground text-right font-medium">{currentVATRate(cover).toFixed(3)}%</td>
+                    <td className="px-4 py-3"><span className="status-active inline-block px-2 py-0.5 rounded-full text-xs font-medium">Active</span></td>
+                    <td className="px-4 py-3 text-center">
+                      <button onClick={() => { setVatHistoryCover(cover); setVatHistoryDialog(true); }}
+                        className="text-primary hover:text-primary/80"><History className="w-4 h-4 inline" /></button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* VAT Change Dialog */}
+          <Dialog open={vatDialog} onOpenChange={setVatDialog}>
+            <DialogContent>
+              <DialogHeader><DialogTitle>Change VAT Rate</DialogTitle></DialogHeader>
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                addVATChange(vatCoverType, Number(vatNewRate), vatEffectiveDate);
+                setVatDialog(false);
+                toast({ title: 'VAT rate updated', description: `${vatCoverType} → ${vatNewRate}% effective ${vatEffectiveDate}` });
+              }} className="space-y-3">
+                <div>
+                  <label className="block text-xs text-muted-foreground mb-1">Cover Type</label>
+                  <select value={vatCoverType} onChange={e => setVatCoverType(e.target.value)} className={inputClass}>
+                    {COVER_TYPES.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-muted-foreground mb-1">Current Rate: {currentVATRate(vatCoverType).toFixed(3)}%</label>
+                </div>
+                <div>
+                  <label className="block text-xs text-muted-foreground mb-1">New Rate (%)</label>
+                  <input type="number" step="0.001" min="0" max="100" value={vatNewRate} onChange={e => setVatNewRate(e.target.value)} required className={inputClass} placeholder="5.000" />
+                </div>
+                <div>
+                  <label className="block text-xs text-muted-foreground mb-1">Effective Date</label>
+                  <input type="date" value={vatEffectiveDate} onChange={e => setVatEffectiveDate(e.target.value)} required className={inputClass} />
+                </div>
+                <p className="text-xs text-muted-foreground">Entry date will be recorded automatically as today.</p>
+                <button type="submit" className="w-full py-2.5 bg-primary text-primary-foreground rounded-lg font-medium text-sm hover:bg-primary/90">Save VAT Change</button>
+              </form>
+            </DialogContent>
+          </Dialog>
+
+          {/* VAT History Dialog */}
+          <Dialog open={vatHistoryDialog} onOpenChange={setVatHistoryDialog}>
+            <DialogContent className="max-w-lg">
+              <DialogHeader><DialogTitle>VAT Change History — {vatHistoryCover}</DialogTitle></DialogHeader>
+              <div className="overflow-x-auto max-h-[60vh]">
+                <table className="w-full">
+                  <thead>
+                    <tr className="table-header">
+                      <th className="text-left px-3 py-2 text-xs">Entry Date</th>
+                      <th className="text-left px-3 py-2 text-xs">Effective Date</th>
+                      <th className="text-right px-3 py-2 text-xs">Prev Rate</th>
+                      <th className="text-right px-3 py-2 text-xs">New Rate</th>
+                      <th className="text-left px-3 py-2 text-xs">Changed By</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {vatEntries.filter(e => e.coverType === vatHistoryCover).sort((a, b) => b.entryDate.localeCompare(a.entryDate)).map(e => (
+                      <tr key={e.id} className="border-b border-border/30">
+                        <td className="px-3 py-2 text-xs text-muted-foreground">{e.entryDate}</td>
+                        <td className="px-3 py-2 text-xs text-foreground font-medium">{e.effectiveDate}</td>
+                        <td className="px-3 py-2 text-xs text-muted-foreground text-right">{e.previousRate !== null ? `${e.previousRate}%` : '—'}</td>
+                        <td className="px-3 py-2 text-xs text-foreground text-right font-medium">{e.rate}%</td>
+                        <td className="px-3 py-2 text-xs text-muted-foreground">{e.changedBy}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       )}
 
