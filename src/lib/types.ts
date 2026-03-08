@@ -20,6 +20,31 @@ export interface Quotation {
   createdAt: string;
 }
 
+export interface MedicalQuestion {
+  id: string;
+  question: string;
+  answer: 'Yes' | 'No' | '';
+  remarks: string;
+}
+
+export interface UWReview {
+  clientVerified: boolean;
+  quotationReviewed: boolean;
+  documentsChecked: boolean;
+  medicalApproved: boolean;
+  medicalQuestions: MedicalQuestion[];
+  uwRemarks: string;
+  riskRating: 'Standard' | 'Substandard' | 'Declined' | '';
+}
+
+export interface CreditReview {
+  receiptNo: string;
+  receiptDate: string;
+  paymentMode: 'Cash' | 'Cheque' | 'Bank Transfer' | 'Online' | '';
+  amountReceived: number;
+  creditRemarks: string;
+}
+
 export interface Proposal {
   id: string;
   proposalNo: string;
@@ -28,6 +53,8 @@ export interface Proposal {
   uwDecision: string;
   status: 'Pending UW' | 'UW Approved' | 'Credit Approved' | 'Policy Issued';
   createdAt: string;
+  uwReview?: UWReview;
+  creditReview?: CreditReview;
 }
 
 export interface Policy {
