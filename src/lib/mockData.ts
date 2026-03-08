@@ -8,8 +8,8 @@ export const mockQuotations: Quotation[] = [
 ];
 
 export const mockProposals: Proposal[] = [
-  { id: '1', proposalNo: 'PP-2026-0001', quotRef: 'QT-2026-0001', clientName: 'Ahmed Al Balushi', uwDecision: 'Approved', status: 'Policy Issued', createdAt: '2026-01-16' },
-  { id: '2', proposalNo: 'PP-2026-0002', quotRef: 'QT-2026-0004', clientName: 'Sara Al Kindi', uwDecision: 'Pending', status: 'Pending UW', createdAt: '2026-03-02' },
+  { id: '1', proposalNo: 'PP-2026-0001', quotRef: 'QT-2026-0001', clientName: 'Ahmed Al Balushi', uwDecision: 'Approved', status: 'Policy Issued', createdAt: '2026-01-16', medicalQuestions: [], receipts: [], credits: [], totalPremiumDue: 132.375 },
+  { id: '2', proposalNo: 'PP-2026-0002', quotRef: 'QT-2026-0004', clientName: 'Sara Al Kindi', uwDecision: 'Pending', status: 'Pending UW', createdAt: '2026-03-02', medicalQuestions: [], receipts: [], credits: [], totalPremiumDue: 178.125 },
 ];
 
 export const mockPolicies: Policy[] = [

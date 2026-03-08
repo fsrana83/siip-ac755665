@@ -1,39 +1,19 @@
-import { Search, MoreHorizontal, ArrowRight, CheckCircle, ClipboardCheck, FileText, Receipt, Eye } from 'lucide-react';
+import { Search, MoreHorizontal, ArrowRight, CheckCircle, ClipboardCheck, FileText, Receipt, Plus, CreditCard } from 'lucide-react';
 import { useState } from 'react';
 import { useData } from '@/contexts/DataContext';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { Proposal, MedicalQuestion, UWReview, CreditReview } from '@/lib/types';
-
-const DEFAULT_MEDICAL_QUESTIONS: MedicalQuestion[] = [
-  { id: 'mq1', question: 'Has the applicant been treated for any heart, lung, kidney or liver condition?', answer: '', remarks: '' },
-  { id: 'mq2', question: 'Has the applicant been diagnosed with diabetes, hypertension or high cholesterol?', answer: '', remarks: '' },
-  { id: 'mq3', question: 'Has the applicant undergone any surgery in the last 5 years?', answer: '', remarks: '' },
-  { id: 'mq4', question: 'Is the applicant currently on any medication?', answer: '', remarks: '' },
-  { id: 'mq5', question: 'Has any insurance application been declined, postponed or modified?', answer: '', remarks: '' },
-  { id: 'mq6', question: 'Does the applicant smoke or consume alcohol regularly?', answer: '', remarks: '' },
-  { id: 'mq7', question: 'Has the applicant had any disability or chronic illness?', answer: '', remarks: '' },
-  { id: 'mq8', question: 'Is the applicant engaged in any hazardous occupation or sport?', answer: '', remarks: '' },
-];
+import { Proposal, UWReview, ReceiptEntry, CreditEntry } from '@/lib/types';
 
 const DEFAULT_UW_REVIEW: UWReview = {
   clientVerified: false,
   quotationReviewed: false,
   documentsChecked: false,
-  medicalApproved: false,
-  medicalQuestions: DEFAULT_MEDICAL_QUESTIONS,
+  medicalReviewed: false,
   uwRemarks: '',
   riskRating: '',
-};
-
-const DEFAULT_CREDIT_REVIEW: CreditReview = {
-  receiptNo: '',
-  receiptDate: new Date().toISOString().split('T')[0],
-  paymentMode: '',
-  amountReceived: 0,
-  creditRemarks: '',
 };
 
 const statusStyles: Record<string, string> = {
@@ -56,23 +36,30 @@ const Proposals = () => {
   // Credit/Receipt dialog
   const [creditDialogOpen, setCreditDialogOpen] = useState(false);
   const [creditProposal, setCreditProposal] = useState<Proposal | null>(null);
-  const [creditReview, setCreditReview] = useState<CreditReview>(DEFAULT_CREDIT_REVIEW);
+
+  // New receipt form
+  const [newReceipt, setNewReceipt] = useState<Omit<ReceiptEntry, 'id'>>({ receiptNo: '', receiptDate: new Date().toISOString().split('T')[0], paymentMode: 'Cash', amount: 0, remarks: '' });
+  // New credit form
+  const [newCredit, setNewCredit] = useState<Omit<CreditEntry, 'id'>>({ creditAmount: 0, creditDays: 30, dueDate: '', remarks: '', status: 'Pending' });
+  const [showAddReceipt, setShowAddReceipt] = useState(false);
+  const [showAddCredit, setShowAddCredit] = useState(false);
 
   const openUWReview = (p: Proposal) => {
     setUwProposal(p);
-    setUwReview(p.uwReview || { ...DEFAULT_UW_REVIEW, medicalQuestions: DEFAULT_MEDICAL_QUESTIONS.map(q => ({ ...q })) });
+    setUwReview(p.uwReview || { ...DEFAULT_UW_REVIEW });
     setUwDialogOpen(true);
   };
 
   const openCreditReview = (p: Proposal) => {
-    const quot = quotations.find(q => q.quotRef === p.quotRef);
     setCreditProposal(p);
-    setCreditReview(p.creditReview || { ...DEFAULT_CREDIT_REVIEW, amountReceived: quot?.totalPremium || 0 });
+    setShowAddReceipt(false);
+    setShowAddCredit(false);
+    setNewReceipt({ receiptNo: '', receiptDate: new Date().toISOString().split('T')[0], paymentMode: 'Cash', amount: 0, remarks: '' });
+    setNewCredit({ creditAmount: 0, creditDays: 30, dueDate: '', remarks: '', status: 'Pending' });
     setCreditDialogOpen(true);
   };
 
-  const canApproveUW = uwReview.clientVerified && uwReview.quotationReviewed && uwReview.documentsChecked && uwReview.medicalApproved && uwReview.riskRating !== '' && uwReview.riskRating !== 'Declined';
-  const allMedicalAnswered = uwReview.medicalQuestions.every(q => q.answer !== '');
+  const canApproveUW = uwReview.clientVerified && uwReview.quotationReviewed && uwReview.documentsChecked && uwReview.medicalReviewed && uwReview.riskRating !== '' && uwReview.riskRating !== 'Declined';
 
   const handleUWApprove = () => {
     if (!uwProposal) return;
@@ -86,21 +73,54 @@ const Proposals = () => {
   const handleUWDecline = () => {
     if (!uwProposal) return;
     setProposals(prev => prev.map(p => p.id === uwProposal.id ? {
-      ...p, uwDecision: 'Declined', status: 'Pending UW' as const, uwReview: { ...uwReview, riskRating: 'Declined' },
+      ...p, uwDecision: 'Declined', uwReview: { ...uwReview, riskRating: 'Declined' },
     } : p));
     setUwDialogOpen(false);
     toast({ title: 'UW Declined', description: uwProposal.proposalNo, variant: 'destructive' });
   };
 
-  const canApproveCreditReview = creditReview.receiptNo !== '' && creditReview.paymentMode !== '' && creditReview.amountReceived > 0;
+  // Credit helpers
+  const getProposalTotals = (p: Proposal) => {
+    const totalReceipts = p.receipts.reduce((sum, r) => sum + r.amount, 0);
+    const totalCredits = p.credits.reduce((sum, c) => sum + c.creditAmount, 0);
+    const balance = p.totalPremiumDue - totalReceipts - totalCredits;
+    return { totalReceipts, totalCredits, balance };
+  };
+
+  const handleAddReceipt = () => {
+    if (!creditProposal || !newReceipt.receiptNo || newReceipt.amount <= 0) return;
+    const entry: ReceiptEntry = { ...newReceipt, id: `R${Date.now()}` };
+    setProposals(prev => prev.map(p => p.id === creditProposal.id ? {
+      ...p, receipts: [...p.receipts, entry],
+    } : p));
+    setCreditProposal(prev => prev ? { ...prev, receipts: [...prev.receipts, entry] } : prev);
+    setNewReceipt({ receiptNo: '', receiptDate: new Date().toISOString().split('T')[0], paymentMode: 'Cash', amount: 0, remarks: '' });
+    setShowAddReceipt(false);
+    toast({ title: 'Receipt added', description: `${entry.receiptNo} — OMR ${entry.amount.toFixed(3)}` });
+  };
+
+  const handleAddCredit = () => {
+    if (!creditProposal || newCredit.creditAmount <= 0 || !newCredit.dueDate) return;
+    const entry: CreditEntry = { ...newCredit, id: `CR${Date.now()}` };
+    setProposals(prev => prev.map(p => p.id === creditProposal.id ? {
+      ...p, credits: [...p.credits, entry],
+    } : p));
+    setCreditProposal(prev => prev ? { ...prev, credits: [...prev.credits, entry] } : prev);
+    setNewCredit({ creditAmount: 0, creditDays: 30, dueDate: '', remarks: '', status: 'Pending' });
+    setShowAddCredit(false);
+    toast({ title: 'Credit entry added', description: `OMR ${entry.creditAmount.toFixed(3)} — Due: ${entry.dueDate}` });
+  };
 
   const handleCreditApprove = () => {
     if (!creditProposal) return;
-    setProposals(prev => prev.map(p => p.id === creditProposal.id ? {
-      ...p, status: 'Credit Approved' as const, creditReview: { ...creditReview },
-    } : p));
+    const { balance } = getProposalTotals(creditProposal);
+    if (balance > 0.001) {
+      toast({ title: 'Cannot approve', description: `Outstanding balance: OMR ${balance.toFixed(3)}`, variant: 'destructive' });
+      return;
+    }
+    setProposals(prev => prev.map(p => p.id === creditProposal.id ? { ...p, status: 'Credit Approved' as const } : p));
     setCreditDialogOpen(false);
-    toast({ title: 'Credit Approved & Receipt Issued', description: `Receipt: ${creditReview.receiptNo}` });
+    toast({ title: 'Credit Approved', description: creditProposal.proposalNo });
   };
 
   const handleConvertToPolicy = (id: string) => {
@@ -131,7 +151,7 @@ const Proposals = () => {
       { label: 'UW Review & Approve', icon: ClipboardCheck, action: () => openUWReview(p) },
     ];
     if (p.status === 'UW Approved') return [
-      { label: 'Issue Receipt / Credit Approve', icon: Receipt, action: () => openCreditReview(p) },
+      { label: 'Receipts / Credit', icon: Receipt, action: () => openCreditReview(p) },
     ];
     if (p.status === 'Credit Approved') return [
       { label: 'Issue Policy', icon: ArrowRight, action: () => handleConvertToPolicy(p.id) },
@@ -146,7 +166,7 @@ const Proposals = () => {
     <div className="space-y-6 animate-fade-in">
       <div>
         <h1 className="text-2xl font-display font-bold text-foreground">Proposals</h1>
-        <p className="text-sm text-muted-foreground mt-1">UW review → Medical approval → Credit/Receipt → Policy issuance</p>
+        <p className="text-sm text-muted-foreground mt-1">UW review → Medical approval → Receipts/Credit → Policy issuance</p>
       </div>
 
       {/* Proposal Table */}
@@ -232,7 +252,7 @@ const Proposals = () => {
                         <p><span className="text-muted-foreground">DOB:</span> <span className="text-foreground">{client.dob}</span></p>
                         <p><span className="text-muted-foreground">Gender:</span> <span className="text-foreground">{client.gender}</span></p>
                         <p><span className="text-muted-foreground">ID:</span> <span className="text-foreground">{client.idType} — {client.idNumber}</span></p>
-                        <p><span className="text-muted-foreground">KYC:</span> <span className={`font-medium ${client.kycStatus === 'Approved' ? 'text-emerald-500' : 'text-amber-500'}`}>{client.kycStatus}</span></p>
+                        <p><span className="text-muted-foreground">KYC:</span> <span className={`font-medium ${client.kycStatus === 'Approved' ? 'text-emerald-600' : 'text-amber-600'}`}>{client.kycStatus}</span></p>
                       </div>
                     ) : <p className="text-sm text-muted-foreground">{uwProposal.clientName}</p>;
                   })()}
@@ -253,67 +273,49 @@ const Proposals = () => {
                 </div>
               </div>
 
+              {/* Medical Questionnaire (read-only, submitted at conversion) */}
+              <div className="space-y-3">
+                <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-primary" /> Medical Questionnaire (Submitted)
+                </h4>
+                {uwProposal.medicalQuestions.length > 0 ? (
+                  <div className="border border-border rounded-lg divide-y divide-border">
+                    {uwProposal.medicalQuestions.map((q, idx) => (
+                      <div key={q.id} className="flex items-start gap-3 p-3">
+                        <span className="text-xs text-muted-foreground font-medium mt-0.5">{idx + 1}.</span>
+                        <div className="flex-1">
+                          <p className="text-sm text-foreground">{q.question}</p>
+                          <div className="flex items-center gap-3 mt-1">
+                            <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                              q.answer === 'Yes' ? 'bg-amber-500/15 text-amber-600' : 'bg-emerald-500/15 text-emerald-600'
+                            }`}>{q.answer}</span>
+                            {q.remarks && <span className="text-xs text-muted-foreground italic">{q.remarks}</span>}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground bg-muted/30 p-3 rounded-lg">No medical questionnaire data available.</p>
+                )}
+              </div>
+
               {/* UW Checklist */}
               <div className="space-y-3">
                 <h4 className="text-sm font-semibold text-foreground">UW Verification Checklist</h4>
                 <div className="grid grid-cols-2 gap-3">
                   {[
-                    { key: 'clientVerified', label: 'Client Identity Verified' },
-                    { key: 'quotationReviewed', label: 'Quotation Details Reviewed' },
+                    { key: 'clientVerified', label: 'Client Identity & KYC Verified' },
+                    { key: 'quotationReviewed', label: 'Quotation & Premium Reviewed' },
                     { key: 'documentsChecked', label: 'Supporting Documents Checked' },
-                    { key: 'medicalApproved', label: 'Medical Questionnaire Approved' },
+                    { key: 'medicalReviewed', label: 'Medical Questionnaire Reviewed' },
                   ].map(item => (
                     <div key={item.key} className="flex items-center gap-3 p-3 bg-muted/20 border border-border rounded-lg">
                       <Switch
                         checked={(uwReview as any)[item.key]}
                         onCheckedChange={(val) => setUwReview(prev => ({ ...prev, [item.key]: val }))}
-                        disabled={item.key === 'medicalApproved' && !allMedicalAnswered}
                       />
                       <span className="text-sm text-foreground">{item.label}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Medical Questionnaire */}
-              <div className="space-y-3">
-                <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-primary" /> Medical Questionnaire
-                </h4>
-                <div className="border border-border rounded-lg divide-y divide-border">
-                  {uwReview.medicalQuestions.map((q, idx) => (
-                    <div key={q.id} className="p-3 space-y-2">
-                      <p className="text-sm text-foreground"><span className="text-muted-foreground font-medium">{idx + 1}.</span> {q.question}</p>
-                      <div className="flex items-center gap-4">
-                        <div className="flex gap-2">
-                          {(['Yes', 'No'] as const).map(ans => (
-                            <button
-                              key={ans}
-                              onClick={() => setUwReview(prev => ({
-                                ...prev,
-                                medicalQuestions: prev.medicalQuestions.map(mq => mq.id === q.id ? { ...mq, answer: ans } : mq),
-                              }))}
-                              className={`px-3 py-1 rounded-md text-xs font-medium border transition-all ${
-                                q.answer === ans
-                                  ? ans === 'Yes' ? 'bg-amber-500/15 text-amber-500 border-amber-500/30' : 'bg-emerald-500/15 text-emerald-500 border-emerald-500/30'
-                                  : 'bg-muted/30 text-muted-foreground border-border hover:bg-muted/50'
-                              }`}
-                            >
-                              {ans}
-                            </button>
-                          ))}
-                        </div>
-                        <input
-                          type="text"
-                          placeholder="Remarks (if any)"
-                          value={q.remarks}
-                          onChange={(e) => setUwReview(prev => ({
-                            ...prev,
-                            medicalQuestions: prev.medicalQuestions.map(mq => mq.id === q.id ? { ...mq, remarks: e.target.value } : mq),
-                          }))}
-                          className="flex-1 px-2 py-1 bg-muted/30 border border-border rounded text-xs text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/50"
-                        />
-                      </div>
                     </div>
                   ))}
                 </div>
@@ -346,27 +348,22 @@ const Proposals = () => {
                 </div>
               </div>
 
-              {/* Progress indicator */}
+              {/* Progress */}
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <CheckCircle className={`w-3.5 h-3.5 ${allMedicalAnswered ? 'text-emerald-500' : ''}`} />
-                <span>Medical: {uwReview.medicalQuestions.filter(q => q.answer !== '').length}/{uwReview.medicalQuestions.length} answered</span>
+                <CheckCircle className={`w-3.5 h-3.5 ${canApproveUW ? 'text-emerald-500' : ''}`} />
+                <span>Checklist: {[uwReview.clientVerified, uwReview.quotationReviewed, uwReview.documentsChecked, uwReview.medicalReviewed].filter(Boolean).length}/4</span>
                 <span className="text-border">|</span>
-                <span>Checklist: {[uwReview.clientVerified, uwReview.quotationReviewed, uwReview.documentsChecked, uwReview.medicalApproved].filter(Boolean).length}/4</span>
+                <span>Risk: {uwReview.riskRating || 'Not set'}</span>
               </div>
 
               {/* Actions */}
               <div className="flex gap-3">
-                <button
-                  onClick={handleUWApprove}
-                  disabled={!canApproveUW}
-                  className="flex-1 py-2.5 bg-emerald-600 text-white rounded-lg font-semibold text-sm hover:bg-emerald-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                >
+                <button onClick={handleUWApprove} disabled={!canApproveUW}
+                  className="flex-1 py-2.5 bg-emerald-600 text-white rounded-lg font-semibold text-sm hover:bg-emerald-700 transition-all disabled:opacity-40 disabled:cursor-not-allowed">
                   Approve & Pass to Accounts
                 </button>
-                <button
-                  onClick={handleUWDecline}
-                  className="px-6 py-2.5 bg-destructive text-destructive-foreground rounded-lg font-semibold text-sm hover:bg-destructive/90 transition-all"
-                >
+                <button onClick={handleUWDecline}
+                  className="px-6 py-2.5 bg-destructive text-destructive-foreground rounded-lg font-semibold text-sm hover:bg-destructive/90 transition-all">
                   Decline
                 </button>
               </div>
@@ -377,92 +374,195 @@ const Proposals = () => {
 
       {/* Credit / Receipt Dialog */}
       <Dialog open={creditDialogOpen} onOpenChange={setCreditDialogOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Receipt className="w-5 h-5 text-primary" /> Issue Receipt — {creditProposal?.proposalNo}
+              <Receipt className="w-5 h-5 text-primary" /> Receipts & Credit — {creditProposal?.proposalNo}
             </DialogTitle>
           </DialogHeader>
-          {creditProposal && (
-            <div className="space-y-5">
-              {/* Proposal summary */}
-              <div className="p-4 bg-muted/30 border border-border rounded-lg space-y-1 text-sm">
-                <p><span className="text-muted-foreground">Client:</span> <span className="text-foreground font-medium">{creditProposal.clientName}</span></p>
-                <p><span className="text-muted-foreground">UW Decision:</span> <span className="text-emerald-500 font-medium">{creditProposal.uwDecision}</span></p>
-                {(() => {
-                  const quot = getQuotDetails(creditProposal.quotRef);
-                  return quot ? (
-                    <p><span className="text-muted-foreground">Premium Due:</span> <span className="text-foreground font-bold">OMR {quot.totalPremium.toFixed(3)}</span></p>
-                  ) : null;
-                })()}
-              </div>
+          {creditProposal && (() => {
+            const { totalReceipts, totalCredits, balance } = getProposalTotals(creditProposal);
+            return (
+              <div className="space-y-5">
+                {/* Summary */}
+                <div className="grid grid-cols-4 gap-3">
+                  {[
+                    { label: 'Premium Due', value: creditProposal.totalPremiumDue, color: 'text-foreground' },
+                    { label: 'Receipts', value: totalReceipts, color: 'text-emerald-600' },
+                    { label: 'Credit', value: totalCredits, color: 'text-amber-600' },
+                    { label: 'Balance', value: balance, color: balance <= 0.001 ? 'text-emerald-600' : 'text-destructive' },
+                  ].map(item => (
+                    <div key={item.label} className="p-3 bg-muted/30 border border-border rounded-lg text-center">
+                      <p className="text-xs text-muted-foreground">{item.label}</p>
+                      <p className={`text-sm font-bold ${item.color}`}>OMR {item.value.toFixed(3)}</p>
+                    </div>
+                  ))}
+                </div>
 
-              {/* Receipt form */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs text-muted-foreground mb-1">Receipt No</label>
-                  <input
-                    type="text"
-                    value={creditReview.receiptNo}
-                    onChange={e => setCreditReview(prev => ({ ...prev, receiptNo: e.target.value }))}
-                    placeholder="REC-2026-0001"
-                    className="w-full px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-muted-foreground mb-1">Receipt Date</label>
-                  <input
-                    type="date"
-                    value={creditReview.receiptDate}
-                    onChange={e => setCreditReview(prev => ({ ...prev, receiptDate: e.target.value }))}
-                    className="w-full px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-muted-foreground mb-1">Payment Mode</label>
-                  <select
-                    value={creditReview.paymentMode}
-                    onChange={e => setCreditReview(prev => ({ ...prev, paymentMode: e.target.value as any }))}
-                    className="w-full px-3 py-2.5 bg-muted/50 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  >
-                    <option value="">— Select —</option>
-                    <option value="Cash">Cash</option>
-                    <option value="Cheque">Cheque</option>
-                    <option value="Bank Transfer">Bank Transfer</option>
-                    <option value="Online">Online</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs text-muted-foreground mb-1">Amount Received (OMR)</label>
-                  <input
-                    type="number"
-                    value={creditReview.amountReceived}
-                    onChange={e => setCreditReview(prev => ({ ...prev, amountReceived: Number(e.target.value) }))}
-                    step={0.001}
-                    className="w-full px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  />
-                </div>
-                <div className="col-span-2">
-                  <label className="block text-xs text-muted-foreground mb-1">Remarks</label>
-                  <textarea
-                    value={creditReview.creditRemarks}
-                    onChange={e => setCreditReview(prev => ({ ...prev, creditRemarks: e.target.value }))}
-                    placeholder="Payment notes..."
-                    rows={2}
-                    className="w-full px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
-                  />
-                </div>
-              </div>
+                {/* Existing Receipts */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                      <Receipt className="w-4 h-4" /> Receipts ({creditProposal.receipts.length})
+                    </h4>
+                    <button onClick={() => { setShowAddReceipt(true); setShowAddCredit(false); }}
+                      className="flex items-center gap-1 text-xs text-primary hover:underline">
+                      <Plus className="w-3 h-3" /> Add Receipt
+                    </button>
+                  </div>
+                  {creditProposal.receipts.length > 0 && (
+                    <div className="border border-border rounded-lg divide-y divide-border">
+                      {creditProposal.receipts.map(r => (
+                        <div key={r.id} className="flex items-center justify-between px-4 py-2 text-sm">
+                          <div>
+                            <span className="font-medium text-foreground">{r.receiptNo}</span>
+                            <span className="text-muted-foreground ml-2">{r.receiptDate} • {r.paymentMode}</span>
+                          </div>
+                          <span className="font-semibold text-emerald-600">OMR {r.amount.toFixed(3)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
-              <button
-                onClick={handleCreditApprove}
-                disabled={!canApproveCreditReview}
-                className="w-full py-2.5 bg-primary text-primary-foreground rounded-lg font-semibold text-sm hover:bg-primary/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                Approve Credit & Issue Receipt
-              </button>
-            </div>
-          )}
+                  {/* Add Receipt Form */}
+                  {showAddReceipt && (
+                    <div className="p-4 bg-muted/20 border border-border rounded-lg space-y-3">
+                      <h5 className="text-xs font-semibold text-foreground uppercase">New Receipt</h5>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs text-muted-foreground mb-1">Receipt No</label>
+                          <input type="text" value={newReceipt.receiptNo}
+                            onChange={e => setNewReceipt(prev => ({ ...prev, receiptNo: e.target.value }))}
+                            placeholder="REC-2026-0001"
+                            className="w-full px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-muted-foreground mb-1">Date</label>
+                          <input type="date" value={newReceipt.receiptDate}
+                            onChange={e => setNewReceipt(prev => ({ ...prev, receiptDate: e.target.value }))}
+                            className="w-full px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-muted-foreground mb-1">Payment Mode</label>
+                          <select value={newReceipt.paymentMode}
+                            onChange={e => setNewReceipt(prev => ({ ...prev, paymentMode: e.target.value as any }))}
+                            className="w-full px-3 py-2.5 bg-muted/50 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50">
+                            <option value="Cash">Cash</option>
+                            <option value="Cheque">Cheque</option>
+                            <option value="Bank Transfer">Bank Transfer</option>
+                            <option value="Online">Online</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-xs text-muted-foreground mb-1">Amount (OMR)</label>
+                          <input type="number" value={newReceipt.amount} step={0.001}
+                            onChange={e => setNewReceipt(prev => ({ ...prev, amount: Number(e.target.value) }))}
+                            className="w-full px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                        </div>
+                        <div className="col-span-2">
+                          <label className="block text-xs text-muted-foreground mb-1">Remarks</label>
+                          <input type="text" value={newReceipt.remarks} placeholder="Payment notes..."
+                            onChange={e => setNewReceipt(prev => ({ ...prev, remarks: e.target.value }))}
+                            className="w-full px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button onClick={handleAddReceipt} disabled={!newReceipt.receiptNo || newReceipt.amount <= 0}
+                          className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed">
+                          Add Receipt
+                        </button>
+                        <button onClick={() => setShowAddReceipt(false)} className="px-4 py-2 bg-muted border border-border rounded-lg text-sm text-foreground hover:bg-muted/80">Cancel</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Existing Credits */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                      <CreditCard className="w-4 h-4" /> Credit Entries ({creditProposal.credits.length})
+                    </h4>
+                    <button onClick={() => { setShowAddCredit(true); setShowAddReceipt(false); }}
+                      className="flex items-center gap-1 text-xs text-primary hover:underline">
+                      <Plus className="w-3 h-3" /> Add Credit
+                    </button>
+                  </div>
+                  {creditProposal.credits.length > 0 && (
+                    <div className="border border-border rounded-lg divide-y divide-border">
+                      {creditProposal.credits.map(c => (
+                        <div key={c.id} className="flex items-center justify-between px-4 py-2 text-sm">
+                          <div>
+                            <span className="font-medium text-foreground">OMR {c.creditAmount.toFixed(3)}</span>
+                            <span className="text-muted-foreground ml-2">{c.creditDays} days • Due: {c.dueDate}</span>
+                          </div>
+                          <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                            c.status === 'Settled' ? 'bg-emerald-500/15 text-emerald-600' : 'bg-amber-500/15 text-amber-600'
+                          }`}>{c.status}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Add Credit Form */}
+                  {showAddCredit && (
+                    <div className="p-4 bg-muted/20 border border-border rounded-lg space-y-3">
+                      <h5 className="text-xs font-semibold text-foreground uppercase">New Credit Entry</h5>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs text-muted-foreground mb-1">Credit Amount (OMR)</label>
+                          <input type="number" value={newCredit.creditAmount} step={0.001}
+                            onChange={e => {
+                              const amt = Number(e.target.value);
+                              const due = new Date();
+                              due.setDate(due.getDate() + newCredit.creditDays);
+                              setNewCredit(prev => ({ ...prev, creditAmount: amt }));
+                            }}
+                            className="w-full px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-muted-foreground mb-1">Credit Days</label>
+                          <input type="number" value={newCredit.creditDays} min={1} max={365}
+                            onChange={e => {
+                              const days = Number(e.target.value);
+                              const due = new Date();
+                              due.setDate(due.getDate() + days);
+                              setNewCredit(prev => ({ ...prev, creditDays: days, dueDate: due.toISOString().split('T')[0] }));
+                            }}
+                            className="w-full px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-muted-foreground mb-1">Due Date</label>
+                          <input type="date" value={newCredit.dueDate}
+                            onChange={e => setNewCredit(prev => ({ ...prev, dueDate: e.target.value }))}
+                            className="w-full px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-muted-foreground mb-1">Remarks</label>
+                          <input type="text" value={newCredit.remarks} placeholder="Credit terms..."
+                            onChange={e => setNewCredit(prev => ({ ...prev, remarks: e.target.value }))}
+                            className="w-full px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button onClick={handleAddCredit} disabled={newCredit.creditAmount <= 0 || !newCredit.dueDate}
+                          className="px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 disabled:opacity-40 disabled:cursor-not-allowed">
+                          Add Credit
+                        </button>
+                        <button onClick={() => setShowAddCredit(false)} className="px-4 py-2 bg-muted border border-border rounded-lg text-sm text-foreground hover:bg-muted/80">Cancel</button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Approve button */}
+                <button onClick={handleCreditApprove} disabled={balance > 0.001}
+                  className="w-full py-2.5 bg-primary text-primary-foreground rounded-lg font-semibold text-sm hover:bg-primary/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+                  {balance <= 0.001 ? 'Approve Credit & Proceed to Policy Issuance' : `Outstanding Balance: OMR ${balance.toFixed(3)}`}
+                </button>
+              </div>
+            );
+          })()}
         </DialogContent>
       </Dialog>
     </div>

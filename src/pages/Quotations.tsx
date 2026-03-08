@@ -1,12 +1,13 @@
 import { useState, useMemo } from 'react';
-import { Quotation, Client } from '@/lib/types';
-import { Plus, Search, UserPlus, Calculator, Ban, ArrowRight, MoreHorizontal } from 'lucide-react';
+import { Quotation, Client, MedicalQuestion } from '@/lib/types';
+import { Plus, Search, UserPlus, Calculator, Ban, ArrowRight, MoreHorizontal, FileText } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
 import { useData } from '@/contexts/DataContext';
 import { PRODUCTS, calculatePremium, calculateAge, PremiumBreakdown } from '@/lib/premiumEngine';
+import { DEFAULT_MEDICAL_QUESTIONS } from '@/lib/medicalQuestions';
 
 const statusStyles: Record<string, string> = {
   Draft: 'status-draft',
@@ -20,7 +21,7 @@ const Quotations = () => {
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
 
-  // Form state
+  // New Quotation form state
   const [selectedClientId, setSelectedClientId] = useState('');
   const [addingClient, setAddingClient] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState('');
@@ -30,6 +31,12 @@ const Quotations = () => {
   const [includePTD, setIncludePTD] = useState(false);
   const [includeCyber, setIncludeCyber] = useState(false);
   const [newClient, setNewClient] = useState({ fullName: '', gender: 'Male', dob: '', nationality: 'Omani', idType: 'National ID', idNumber: '', phone: '', email: '' });
+
+  // Convert to Proposal dialog state
+  const [convertOpen, setConvertOpen] = useState(false);
+  const [convertQuotation, setConvertQuotation] = useState<Quotation | null>(null);
+  const [medicalQuestions, setMedicalQuestions] = useState<MedicalQuestion[]>([]);
+  const [medicalStep, setMedicalStep] = useState(0); // 0 = intro, 1 = filling
 
   const selectedClient = clients.find(c => c.clientId === selectedClientId);
   const selectedProduct = PRODUCTS.find(p => p.id === selectedProductId);
@@ -76,15 +83,29 @@ const Quotations = () => {
     toast({ title: 'Quotation voided', description: q.quotRef });
   };
 
-  const handleConvertToProposal = (q: Quotation) => {
+  const openConvertDialog = (q: Quotation) => {
+    setConvertQuotation(q);
+    setMedicalQuestions(DEFAULT_MEDICAL_QUESTIONS.map(mq => ({ ...mq })));
+    setMedicalStep(0);
+    setConvertOpen(true);
+  };
+
+  const allMedicalAnswered = medicalQuestions.every(q => q.answer !== '');
+
+  const handleConvertToProposal = () => {
+    if (!convertQuotation || !allMedicalAnswered) return;
     const proposalNo = `PP-2026-${String(proposals.length + 1).padStart(4, '0')}`;
     setProposals(prev => [...prev, {
-      id: String(proposals.length + 1), proposalNo, quotRef: q.quotRef,
-      clientName: q.clientName, uwDecision: 'Pending', status: 'Pending UW' as const,
+      id: String(proposals.length + 1), proposalNo, quotRef: convertQuotation.quotRef,
+      clientName: convertQuotation.clientName, uwDecision: 'Pending', status: 'Pending UW' as const,
       createdAt: new Date().toISOString().split('T')[0],
+      medicalQuestions: [...medicalQuestions],
+      receipts: [], credits: [],
+      totalPremiumDue: convertQuotation.totalPremium,
     }]);
-    setQuotations(prev => prev.map(x => x.id === q.id ? { ...x, status: 'Converted' as const } : x));
-    toast({ title: 'Converted to proposal', description: `${q.quotRef} → ${proposalNo}` });
+    setQuotations(prev => prev.map(x => x.id === convertQuotation.id ? { ...x, status: 'Converted' as const } : x));
+    setConvertOpen(false);
+    toast({ title: 'Converted to proposal', description: `${convertQuotation.quotRef} → ${proposalNo} (Medical submitted)` });
   };
 
   const filtered = quotations.filter(q =>
@@ -302,7 +323,7 @@ const Quotations = () => {
                           </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleConvertToProposal(q)} className="gap-2">
+                          <DropdownMenuItem onClick={() => openConvertDialog(q)} className="gap-2">
                             <ArrowRight className="w-4 h-4" /> Convert to Proposal
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleVoid(q)} className="gap-2 text-destructive focus:text-destructive">
@@ -318,6 +339,88 @@ const Quotations = () => {
           </table>
         </div>
       </div>
+
+      {/* Convert to Proposal — Medical Questionnaire Dialog */}
+      <Dialog open={convertOpen} onOpenChange={setConvertOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="w-5 h-5 text-primary" /> Convert to Proposal — {convertQuotation?.quotRef}
+            </DialogTitle>
+          </DialogHeader>
+          {convertQuotation && (
+            <div className="space-y-5">
+              {/* Quotation Summary */}
+              <div className="p-4 bg-muted/30 border border-border rounded-lg grid grid-cols-2 gap-2 text-sm">
+                <p><span className="text-muted-foreground">Client:</span> <span className="text-foreground font-medium">{convertQuotation.clientName}</span></p>
+                <p><span className="text-muted-foreground">Product:</span> <span className="text-foreground">{convertQuotation.productName}</span></p>
+                <p><span className="text-muted-foreground">Sum Assured:</span> <span className="text-foreground">OMR {convertQuotation.sumAssured.toLocaleString()}</span></p>
+                <p><span className="text-muted-foreground">Annual Premium:</span> <span className="text-foreground font-bold">OMR {convertQuotation.totalPremium.toFixed(3)}</span></p>
+              </div>
+
+              {medicalStep === 0 ? (
+                <div className="text-center space-y-4 py-4">
+                  <FileText className="w-10 h-10 text-primary mx-auto" />
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground">Medical Questionnaire Required</h3>
+                    <p className="text-xs text-muted-foreground mt-1">The client must complete a medical declaration before this quotation can be submitted as a proposal for underwriting.</p>
+                  </div>
+                  <button onClick={() => setMedicalStep(1)}
+                    className="px-6 py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-all">
+                    Start Medical Questionnaire
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="space-y-1">
+                    <h4 className="text-sm font-semibold text-foreground">Medical Declaration</h4>
+                    <p className="text-xs text-muted-foreground">{medicalQuestions.filter(q => q.answer !== '').length}/{medicalQuestions.length} answered</p>
+                  </div>
+                  <div className="border border-border rounded-lg divide-y divide-border">
+                    {medicalQuestions.map((q, idx) => (
+                      <div key={q.id} className="p-3 space-y-2">
+                        <p className="text-sm text-foreground"><span className="text-muted-foreground font-medium">{idx + 1}.</span> {q.question}</p>
+                        <div className="flex items-center gap-4">
+                          <div className="flex gap-2">
+                            {(['Yes', 'No'] as const).map(ans => (
+                              <button
+                                key={ans}
+                                onClick={() => setMedicalQuestions(prev => prev.map(mq => mq.id === q.id ? { ...mq, answer: ans } : mq))}
+                                className={`px-3 py-1 rounded-md text-xs font-medium border transition-all ${
+                                  q.answer === ans
+                                    ? ans === 'Yes' ? 'bg-amber-500/15 text-amber-600 border-amber-500/30' : 'bg-emerald-500/15 text-emerald-600 border-emerald-500/30'
+                                    : 'bg-muted/30 text-muted-foreground border-border hover:bg-muted/50'
+                                }`}
+                              >
+                                {ans}
+                              </button>
+                            ))}
+                          </div>
+                          <input
+                            type="text"
+                            placeholder="Remarks (if any)"
+                            value={q.remarks}
+                            onChange={(e) => setMedicalQuestions(prev => prev.map(mq => mq.id === q.id ? { ...mq, remarks: e.target.value } : mq))}
+                            className="flex-1 px-2 py-1 bg-muted/30 border border-border rounded text-xs text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/50"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <button
+                    onClick={handleConvertToProposal}
+                    disabled={!allMedicalAnswered}
+                    className="w-full py-3 bg-primary text-primary-foreground rounded-lg font-semibold text-sm hover:bg-primary/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {allMedicalAnswered ? 'Submit Medical & Create Proposal' : `Complete all ${medicalQuestions.length} questions to proceed`}
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
