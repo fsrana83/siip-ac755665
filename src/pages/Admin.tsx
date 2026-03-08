@@ -413,7 +413,7 @@ const Admin = () => {
                         <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${p.active ? 'status-active' : 'status-draft'}`}>{p.active ? 'Active' : 'Inactive'}</span>
                       </td>
                       <td className="px-4 py-3 text-center">
-                        <button onClick={() => { setEditProduct({ ...p }); setProductDialog(true); }}
+                        <button onClick={() => { setEditProduct({ ...p }); setIsNewProduct(false); setProductDialog(true); }}
                           className="text-primary hover:text-primary/80"><Edit className="w-4 h-4" /></button>
                       </td>
                     </tr>
