@@ -1,10 +1,17 @@
 import { useState } from 'react';
-import { mockPolicies } from '@/lib/mockData';
 import { Search } from 'lucide-react';
+import { useData } from '@/contexts/DataContext';
+
+const statusStyles: Record<string, string> = {
+  Active: 'status-active',
+  Void: 'bg-destructive/15 text-destructive border border-destructive/20',
+};
 
 const Policies = () => {
   const [search, setSearch] = useState('');
-  const filtered = mockPolicies.filter(p =>
+  const { policies } = useData();
+
+  const filtered = policies.filter(p =>
     p.clientName.toLowerCase().includes(search.toLowerCase()) ||
     p.policyNo.toLowerCase().includes(search.toLowerCase())
   );
@@ -15,7 +22,6 @@ const Policies = () => {
         <h1 className="text-2xl font-display font-bold text-foreground">Policies</h1>
         <p className="text-sm text-muted-foreground mt-1">Active policies and policy register</p>
       </div>
-
       <div className="glass-card">
         <div className="p-4 border-b border-border/50">
           <div className="relative max-w-sm">
@@ -49,7 +55,7 @@ const Policies = () => {
                   <td className="px-4 py-3 text-sm text-muted-foreground">{p.commencementDate}</td>
                   <td className="px-4 py-3 text-sm text-muted-foreground">{p.expiryDate}</td>
                   <td className="px-4 py-3">
-                    <span className="status-active inline-block px-2 py-0.5 rounded-full text-xs font-medium">{p.status}</span>
+                    <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statusStyles[p.status] || 'status-active'}`}>{p.status}</span>
                   </td>
                 </tr>
               ))}
