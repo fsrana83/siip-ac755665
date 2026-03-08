@@ -15,8 +15,12 @@ const CreditControl = () => {
   // Credit/Receipt dialog
   const [creditDialogOpen, setCreditDialogOpen] = useState(false);
   const [creditProposal, setCreditProposal] = useState<Proposal | null>(null);
-  const [newReceipt, setNewReceipt] = useState<Omit<ReceiptEntry, 'id'>>({ receiptNo: '', receiptDate: new Date().toISOString().split('T')[0], paymentMode: 'Cash', amount: 0, remarks: '' });
+  const [newReceipt, setNewReceipt] = useState<Omit<ReceiptEntry, 'id' | 'receiptNo'>>({ receiptDate: new Date().toISOString().split('T')[0], paymentMode: 'Cash', amount: 0, remarks: '' });
   const [newCredit, setNewCredit] = useState<Omit<CreditEntry, 'id'>>({ creditAmount: 0, creditDays: 30, dueDate: '', remarks: '', status: 'Pending' });
+
+  // Auto-generate receipt number
+  const allReceiptsCount = proposals.reduce((sum, p) => sum + p.receipts.length, 0);
+  const nextReceiptNo = `REC-${new Date().getFullYear()}-${String(allReceiptsCount + 1).padStart(4, '0')}`;
   const [showAddReceipt, setShowAddReceipt] = useState(false);
   const [showAddCredit, setShowAddCredit] = useState(false);
 
@@ -26,7 +30,7 @@ const CreditControl = () => {
     setCreditProposal(p);
     setShowAddReceipt(false);
     setShowAddCredit(false);
-    setNewReceipt({ receiptNo: '', receiptDate: new Date().toISOString().split('T')[0], paymentMode: 'Cash', amount: 0, remarks: '' });
+    setNewReceipt({ receiptDate: new Date().toISOString().split('T')[0], paymentMode: 'Cash', amount: 0, remarks: '' });
     setNewCredit({ creditAmount: 0, creditDays: 30, dueDate: '', remarks: '', status: 'Pending' });
     setCreditDialogOpen(true);
   };
@@ -39,11 +43,11 @@ const CreditControl = () => {
   };
 
   const handleAddReceipt = () => {
-    if (!creditProposal || !newReceipt.receiptNo || newReceipt.amount <= 0) return;
-    const entry: ReceiptEntry = { ...newReceipt, id: `R${Date.now()}` };
+    if (!creditProposal || newReceipt.amount <= 0) return;
+    const entry: ReceiptEntry = { ...newReceipt, id: `R${Date.now()}`, receiptNo: nextReceiptNo };
     setProposals(prev => prev.map(p => p.id === creditProposal.id ? { ...p, receipts: [...p.receipts, entry] } : p));
     setCreditProposal(prev => prev ? { ...prev, receipts: [...prev.receipts, entry] } : prev);
-    setNewReceipt({ receiptNo: '', receiptDate: new Date().toISOString().split('T')[0], paymentMode: 'Cash', amount: 0, remarks: '' });
+    setNewReceipt({ receiptDate: new Date().toISOString().split('T')[0], paymentMode: 'Cash', amount: 0, remarks: '' });
     setShowAddReceipt(false);
     toast({ title: 'Receipt added', description: `${entry.receiptNo} — OMR ${entry.amount.toFixed(3)}` });
   };
@@ -353,8 +357,7 @@ const CreditControl = () => {
                       <div className="grid grid-cols-2 gap-3">
                         <div>
                           <label className="block text-xs text-muted-foreground mb-1">Receipt No</label>
-                          <input type="text" value={newReceipt.receiptNo} onChange={e => setNewReceipt(prev => ({ ...prev, receiptNo: e.target.value }))} placeholder="REC-2026-0001"
-                            className="w-full px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                          <div className="w-full px-3 py-2 bg-muted/30 border border-border rounded-lg text-sm text-primary font-medium">{nextReceiptNo}</div>
                         </div>
                         <div>
                           <label className="block text-xs text-muted-foreground mb-1">Date</label>
@@ -383,7 +386,7 @@ const CreditControl = () => {
                         </div>
                       </div>
                       <div className="flex gap-2">
-                        <button onClick={handleAddReceipt} disabled={!newReceipt.receiptNo || newReceipt.amount <= 0}
+                        <button onClick={handleAddReceipt} disabled={newReceipt.amount <= 0}
                           className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed">Add Receipt</button>
                         <button onClick={() => setShowAddReceipt(false)} className="px-4 py-2 bg-muted border border-border rounded-lg text-sm text-foreground hover:bg-muted/80">Cancel</button>
                       </div>
@@ -429,7 +432,8 @@ const CreditControl = () => {
                           <input type="number" value={newCredit.creditDays} min={1} max={365}
                             onChange={e => {
                               const days = Number(e.target.value);
-                              const due = new Date(); due.setDate(due.getDate() + days);
+                              const baseDate = creditProposal?.approvalDate ? new Date(creditProposal.approvalDate) : new Date();
+                              const due = new Date(baseDate); due.setDate(due.getDate() + days);
                               setNewCredit(prev => ({ ...prev, creditDays: days, dueDate: due.toISOString().split('T')[0] }));
                             }}
                             className="w-full px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" />

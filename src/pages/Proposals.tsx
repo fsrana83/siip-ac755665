@@ -49,7 +49,7 @@ const Proposals = () => {
   const handleUWApprove = () => {
     if (!uwProposal) return;
     setProposals(prev => prev.map(p => p.id === uwProposal.id ? {
-      ...p, uwDecision: `Approved (${uwReview.riskRating})`, status: 'UW Approved' as const, uwReview: { ...uwReview },
+      ...p, uwDecision: `Approved (${uwReview.riskRating})`, status: 'UW Approved' as const, uwReview: { ...uwReview }, approvalDate: new Date().toISOString().split('T')[0],
     } : p));
     setUwDialogOpen(false);
     toast({ title: 'UW Approved', description: `${uwProposal.proposalNo} — Risk: ${uwReview.riskRating}` });
