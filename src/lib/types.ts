@@ -90,6 +90,7 @@ export interface Policy {
   productName: string;
   sumAssured: number;
   totalPremium: number;
+  premiumFrequency: PremiumFrequency;
   commencementDate: string;
   expiryDate: string;
   status: 'Active' | 'Void';
