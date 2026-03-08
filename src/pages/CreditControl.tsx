@@ -15,8 +15,12 @@ const CreditControl = () => {
   // Credit/Receipt dialog
   const [creditDialogOpen, setCreditDialogOpen] = useState(false);
   const [creditProposal, setCreditProposal] = useState<Proposal | null>(null);
-  const [newReceipt, setNewReceipt] = useState<Omit<ReceiptEntry, 'id'>>({ receiptNo: '', receiptDate: new Date().toISOString().split('T')[0], paymentMode: 'Cash', amount: 0, remarks: '' });
+  const [newReceipt, setNewReceipt] = useState<Omit<ReceiptEntry, 'id' | 'receiptNo'>>({ receiptDate: new Date().toISOString().split('T')[0], paymentMode: 'Cash', amount: 0, remarks: '' });
   const [newCredit, setNewCredit] = useState<Omit<CreditEntry, 'id'>>({ creditAmount: 0, creditDays: 30, dueDate: '', remarks: '', status: 'Pending' });
+
+  // Auto-generate receipt number
+  const allReceiptsCount = proposals.reduce((sum, p) => sum + p.receipts.length, 0);
+  const nextReceiptNo = `REC-${new Date().getFullYear()}-${String(allReceiptsCount + 1).padStart(4, '0')}`;
   const [showAddReceipt, setShowAddReceipt] = useState(false);
   const [showAddCredit, setShowAddCredit] = useState(false);
 
