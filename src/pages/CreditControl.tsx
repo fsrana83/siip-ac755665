@@ -43,11 +43,11 @@ const CreditControl = () => {
   };
 
   const handleAddReceipt = () => {
-    if (!creditProposal || !newReceipt.receiptNo || newReceipt.amount <= 0) return;
-    const entry: ReceiptEntry = { ...newReceipt, id: `R${Date.now()}` };
+    if (!creditProposal || newReceipt.amount <= 0) return;
+    const entry: ReceiptEntry = { ...newReceipt, id: `R${Date.now()}`, receiptNo: nextReceiptNo };
     setProposals(prev => prev.map(p => p.id === creditProposal.id ? { ...p, receipts: [...p.receipts, entry] } : p));
     setCreditProposal(prev => prev ? { ...prev, receipts: [...prev.receipts, entry] } : prev);
-    setNewReceipt({ receiptNo: '', receiptDate: new Date().toISOString().split('T')[0], paymentMode: 'Cash', amount: 0, remarks: '' });
+    setNewReceipt({ receiptDate: new Date().toISOString().split('T')[0], paymentMode: 'Cash', amount: 0, remarks: '' });
     setShowAddReceipt(false);
     toast({ title: 'Receipt added', description: `${entry.receiptNo} — OMR ${entry.amount.toFixed(3)}` });
   };
