@@ -51,6 +51,7 @@ const Quotations = () => {
   const resetForm = () => {
     setSelectedClientId(''); setSelectedProductId(''); setSumAssured(100000); setTerm(10);
     setHealthLoading(0); setIncludePTD(false); setIncludeCyber(false); setAddingClient(false);
+    setPremiumFrequency('Annual');
     setNewClient({ fullName: '', gender: 'Male', dob: '', nationality: 'Omani', idType: 'National ID', idNumber: '', phone: '', email: '' });
   };
 
