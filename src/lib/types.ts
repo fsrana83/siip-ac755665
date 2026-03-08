@@ -1,5 +1,15 @@
 export type UserRole = 'admin' | 'coo' | 'sales' | 'uw' | 'credit' | 'actuary' | 'manager';
 
+export type PremiumFrequency = 'Annual' | 'Semi-Annual' | 'Quarterly' | 'Monthly' | 'Single';
+
+export const FREQUENCY_DIVISORS: Record<PremiumFrequency, number> = {
+  'Annual': 1,
+  'Semi-Annual': 2,
+  'Quarterly': 4,
+  'Monthly': 12,
+  'Single': 1,
+};
+
 export interface User {
   id: string;
   username: string;
@@ -15,6 +25,7 @@ export interface Quotation {
   productName: string;
   sumAssured: number;
   totalPremium: number;
+  premiumFrequency: PremiumFrequency;
   status: 'Draft' | 'Converted' | 'Void';
   createdBy: string;
   createdAt: string;
@@ -60,6 +71,7 @@ export interface Proposal {
   quotRef: string;
   clientName: string;
   uwDecision: string;
+  premiumFrequency: PremiumFrequency;
   status: 'Pending UW' | 'UW Approved' | 'Credit Approved' | 'Policy Issued';
   createdAt: string;
   approvalDate?: string;
@@ -78,6 +90,7 @@ export interface Policy {
   productName: string;
   sumAssured: number;
   totalPremium: number;
+  premiumFrequency: PremiumFrequency;
   commencementDate: string;
   expiryDate: string;
   status: 'Active' | 'Void';

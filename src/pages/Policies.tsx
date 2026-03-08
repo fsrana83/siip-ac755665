@@ -28,6 +28,7 @@ const Policies = () => {
       id: String(policies.length + 1), policyNo, proposalNo: proposal.proposalNo,
       clientName: proposal.clientName, productName: quot?.productName || 'N/A',
       sumAssured: quot?.sumAssured || 0, totalPremium: quot?.totalPremium || 0,
+      premiumFrequency: proposal.premiumFrequency,
       commencementDate: today, expiryDate: expiry.toISOString().split('T')[0], status: 'Active' as const,
     }]);
     setProposals(prev => prev.map(p => p.id === proposalId ? { ...p, status: 'Policy Issued' as const } : p));
@@ -102,6 +103,7 @@ const Policies = () => {
                 <th className="text-left px-4 py-3">Product</th>
                 <th className="text-right px-4 py-3">Sum Assured</th>
                 <th className="text-right px-4 py-3">Premium</th>
+                <th className="text-left px-4 py-3">Frequency</th>
                 <th className="text-left px-4 py-3">Commencement</th>
                 <th className="text-left px-4 py-3">Expiry</th>
                 <th className="text-left px-4 py-3">Status</th>
@@ -115,6 +117,7 @@ const Policies = () => {
                   <td className="px-4 py-3 text-sm text-muted-foreground">{p.productName}</td>
                   <td className="px-4 py-3 text-sm text-foreground text-right">OMR {p.sumAssured.toLocaleString()}</td>
                   <td className="px-4 py-3 text-sm text-foreground text-right">OMR {p.totalPremium.toFixed(3)}</td>
+                  <td className="px-4 py-3"><span className="px-2 py-0.5 bg-accent text-accent-foreground rounded-full text-xs font-medium">{p.premiumFrequency}</span></td>
                   <td className="px-4 py-3 text-sm text-muted-foreground">{p.commencementDate}</td>
                   <td className="px-4 py-3 text-sm text-muted-foreground">{p.expiryDate}</td>
                   <td className="px-4 py-3">

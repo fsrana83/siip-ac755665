@@ -1,19 +1,19 @@
 import { Quotation, Proposal, Policy, Client, Claim } from './types';
 
 export const mockQuotations: Quotation[] = [
-  { id: '1', quotRef: 'QT-2026-0001', clientName: 'Ahmed Al Balushi', productName: 'Term Life - Level', sumAssured: 100000, totalPremium: 132.375, status: 'Converted', createdBy: 'sales01', createdAt: '2026-01-15' },
-  { id: '2', quotRef: 'QT-2026-0002', clientName: 'Fatima Al Rashdi', productName: 'Whole Life - Traditional', sumAssured: 50000, totalPremium: 89.250, status: 'Draft', createdBy: 'sales01', createdAt: '2026-02-01' },
-  { id: '3', quotRef: 'QT-2026-0003', clientName: 'Mohammed Al Habsi', productName: 'Endowment - Savings', sumAssured: 200000, totalPremium: 245.500, status: 'Draft', createdBy: 'admin', createdAt: '2026-02-20' },
-  { id: '4', quotRef: 'QT-2026-0004', clientName: 'Sara Al Kindi', productName: 'Term Life - Decreasing', sumAssured: 150000, totalPremium: 178.125, status: 'Converted', createdBy: 'sales01', createdAt: '2026-03-01' },
+  { id: '1', quotRef: 'QT-2026-0001', clientName: 'Ahmed Al Balushi', productName: 'Term Life - Level', sumAssured: 100000, totalPremium: 132.375, premiumFrequency: 'Annual', status: 'Converted', createdBy: 'sales01', createdAt: '2026-01-15' },
+  { id: '2', quotRef: 'QT-2026-0002', clientName: 'Fatima Al Rashdi', productName: 'Whole Life - Traditional', sumAssured: 50000, totalPremium: 89.250, premiumFrequency: 'Annual', status: 'Draft', createdBy: 'sales01', createdAt: '2026-02-01' },
+  { id: '3', quotRef: 'QT-2026-0003', clientName: 'Mohammed Al Habsi', productName: 'Endowment - Savings', sumAssured: 200000, totalPremium: 245.500, premiumFrequency: 'Semi-Annual', status: 'Draft', createdBy: 'admin', createdAt: '2026-02-20' },
+  { id: '4', quotRef: 'QT-2026-0004', clientName: 'Sara Al Kindi', productName: 'Term Life - Decreasing', sumAssured: 150000, totalPremium: 178.125, premiumFrequency: 'Quarterly', status: 'Converted', createdBy: 'sales01', createdAt: '2026-03-01' },
 ];
 
 export const mockProposals: Proposal[] = [
-  { id: '1', proposalNo: 'PP-2026-0001', quotRef: 'QT-2026-0001', clientName: 'Ahmed Al Balushi', uwDecision: 'Approved', status: 'Policy Issued', createdAt: '2026-01-16', medicalQuestions: [], receipts: [], credits: [], totalPremiumDue: 132.375 },
-  { id: '2', proposalNo: 'PP-2026-0002', quotRef: 'QT-2026-0004', clientName: 'Sara Al Kindi', uwDecision: 'Pending', status: 'Pending UW', createdAt: '2026-03-02', medicalQuestions: [], receipts: [], credits: [], totalPremiumDue: 178.125 },
+  { id: '1', proposalNo: 'PP-2026-0001', quotRef: 'QT-2026-0001', clientName: 'Ahmed Al Balushi', uwDecision: 'Approved', premiumFrequency: 'Annual', status: 'Policy Issued', createdAt: '2026-01-16', medicalQuestions: [], receipts: [], credits: [], totalPremiumDue: 132.375 },
+  { id: '2', proposalNo: 'PP-2026-0002', quotRef: 'QT-2026-0004', clientName: 'Sara Al Kindi', uwDecision: 'Pending', premiumFrequency: 'Quarterly', status: 'Pending UW', createdAt: '2026-03-02', medicalQuestions: [], receipts: [], credits: [], totalPremiumDue: 178.125 },
 ];
 
 export const mockPolicies: Policy[] = [
-  { id: '1', policyNo: 'PL-2026-0001', proposalNo: 'PP-2026-0001', clientName: 'Ahmed Al Balushi', productName: 'Term Life - Level', sumAssured: 100000, totalPremium: 132.375, commencementDate: '2026-01-20', expiryDate: '2036-01-20', status: 'Active' },
+  { id: '1', policyNo: 'PL-2026-0001', proposalNo: 'PP-2026-0001', clientName: 'Ahmed Al Balushi', productName: 'Term Life - Level', sumAssured: 100000, totalPremium: 132.375, premiumFrequency: 'Annual', commencementDate: '2026-01-20', expiryDate: '2036-01-20', status: 'Active' },
 ];
 
 export const mockClients: Client[] = [

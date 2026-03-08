@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Quotation, Client, MedicalQuestion } from '@/lib/types';
+import { Quotation, Client, MedicalQuestion, PremiumFrequency, FREQUENCY_DIVISORS } from '@/lib/types';
 import { Plus, Search, UserPlus, Calculator, Ban, ArrowRight, MoreHorizontal, FileText } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
@@ -30,6 +30,7 @@ const Quotations = () => {
   const [healthLoading, setHealthLoading] = useState(0);
   const [includePTD, setIncludePTD] = useState(false);
   const [includeCyber, setIncludeCyber] = useState(false);
+  const [premiumFrequency, setPremiumFrequency] = useState<PremiumFrequency>('Annual');
   const [newClient, setNewClient] = useState({ fullName: '', gender: 'Male', dob: '', nationality: 'Omani', idType: 'National ID', idNumber: '', phone: '', email: '' });
 
   // Convert to Proposal dialog state
@@ -50,6 +51,7 @@ const Quotations = () => {
   const resetForm = () => {
     setSelectedClientId(''); setSelectedProductId(''); setSumAssured(100000); setTerm(10);
     setHealthLoading(0); setIncludePTD(false); setIncludeCyber(false); setAddingClient(false);
+    setPremiumFrequency('Annual');
     setNewClient({ fullName: '', gender: 'Male', dob: '', nationality: 'Omani', idType: 'National ID', idNumber: '', phone: '', email: '' });
   };
 
@@ -64,18 +66,20 @@ const Quotations = () => {
 
   const handleCreateQuotation = () => {
     if (!selectedClient || !selectedProduct || !premium) return;
+    const freqPremium = premiumFrequency === 'Single' ? premium.totalPremium : premium.annualPremium / FREQUENCY_DIVISORS[premiumFrequency];
     const newQ: Quotation = {
       id: String(quotations.length + 1),
       quotRef: `QT-2026-${String(quotations.length + 1).padStart(4, '0')}`,
       clientName: selectedClient.fullName,
       productName: selectedProduct.name,
       sumAssured, totalPremium: premium.annualPremium,
+      premiumFrequency,
       status: 'Draft', createdBy: 'admin',
       createdAt: new Date().toISOString().split('T')[0],
     };
     setQuotations(prev => [...prev, newQ]);
     setOpen(false); resetForm();
-    toast({ title: 'Quotation created', description: `${newQ.quotRef} — OMR ${newQ.totalPremium.toFixed(3)}` });
+    toast({ title: 'Quotation created', description: `${newQ.quotRef} — OMR ${newQ.totalPremium.toFixed(3)} (${premiumFrequency})` });
   };
 
   const handleVoid = (q: Quotation) => {
@@ -98,6 +102,7 @@ const Quotations = () => {
     setProposals(prev => [...prev, {
       id: String(proposals.length + 1), proposalNo, quotRef: convertQuotation.quotRef,
       clientName: convertQuotation.clientName, uwDecision: 'Pending', status: 'Pending UW' as const,
+      premiumFrequency: convertQuotation.premiumFrequency,
       createdAt: new Date().toISOString().split('T')[0],
       medicalQuestions: [...medicalQuestions],
       receipts: [], credits: [],
@@ -280,6 +285,15 @@ const Quotations = () => {
                     <label className="text-sm text-foreground">Cyber Protection</label>
                   </div>
                 </div>
+                <div>
+                  <label className="block text-xs text-muted-foreground mb-1">Premium Frequency</label>
+                  <select value={premiumFrequency} onChange={e => setPremiumFrequency(e.target.value as PremiumFrequency)}
+                    className="w-full px-3 py-2.5 bg-muted/50 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50">
+                    {(['Annual', 'Semi-Annual', 'Quarterly', 'Monthly', 'Single'] as PremiumFrequency[]).map(f => (
+                      <option key={f} value={f}>{f}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               {/* Step 3: Breakdown */}
@@ -347,6 +361,7 @@ const Quotations = () => {
                 <th className="text-left px-4 py-3">Product</th>
                 <th className="text-right px-4 py-3">Sum Assured</th>
                 <th className="text-right px-4 py-3">Annual Premium</th>
+                <th className="text-left px-4 py-3">Frequency</th>
                 <th className="text-left px-4 py-3">Status</th>
                 <th className="text-left px-4 py-3">Date</th>
                 <th className="text-center px-4 py-3">Actions</th>
@@ -360,6 +375,7 @@ const Quotations = () => {
                   <td className="px-4 py-3 text-sm text-muted-foreground">{q.productName}</td>
                   <td className="px-4 py-3 text-sm text-foreground text-right">OMR {q.sumAssured.toLocaleString()}</td>
                   <td className="px-4 py-3 text-sm text-foreground text-right">OMR {q.totalPremium.toFixed(3)}</td>
+                  <td className="px-4 py-3"><span className="px-2 py-0.5 bg-accent text-accent-foreground rounded-full text-xs font-medium">{q.premiumFrequency}</span></td>
                   <td className="px-4 py-3">
                     <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statusStyles[q.status]}`}>{q.status}</span>
                   </td>
