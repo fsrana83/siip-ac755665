@@ -124,6 +124,7 @@ export const TAB_ACCESS: Record<string, UserRole[] | null> = {
   policies: null,
   claims: ['admin', 'uw', 'coo', 'manager', 'credit'],
   reinsurance: ['admin', 'uw', 'coo', 'actuary', 'manager'],
+  'credit-control': ['admin', 'coo', 'credit'],
   accounting: ['admin', 'coo', 'credit'],
   vat: ['admin', 'coo', 'credit', 'actuary', 'manager'],
   reports: null,

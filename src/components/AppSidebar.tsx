@@ -5,7 +5,7 @@ import logo from '@/assets/logo.png';
 import {
   LayoutDashboard, FileText, Users, ClipboardList, Shield,
   AlertTriangle, Building2, Receipt, FileBarChart, Settings,
-  LogOut, ChevronRight, Landmark, Code2
+  LogOut, ChevronRight, Landmark, Code2, CreditCard
 } from 'lucide-react';
 
 const navItems = [

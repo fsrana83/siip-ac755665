@@ -40,6 +40,7 @@ const AppRoutes = () => {
         <Route path="/policies" element={<Policies />} />
         <Route path="/claims" element={<Claims />} />
         <Route path="/reinsurance" element={<Reinsurance />} />
+        <Route path="/credit-control" element={<CreditControl />} />
         <Route path="/accounting" element={<Accounting />} />
         <Route path="/vat" element={<VATReports />} />
         <Route path="/reports" element={<Reports />} />
