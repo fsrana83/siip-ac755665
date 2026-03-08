@@ -1,5 +1,15 @@
 export type UserRole = 'admin' | 'coo' | 'sales' | 'uw' | 'credit' | 'actuary' | 'manager';
 
+export type PremiumFrequency = 'Annual' | 'Semi-Annual' | 'Quarterly' | 'Monthly' | 'Single';
+
+export const FREQUENCY_DIVISORS: Record<PremiumFrequency, number> = {
+  'Annual': 1,
+  'Semi-Annual': 2,
+  'Quarterly': 4,
+  'Monthly': 12,
+  'Single': 1,
+};
+
 export interface User {
   id: string;
   username: string;
