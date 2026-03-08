@@ -30,7 +30,7 @@ const CreditControl = () => {
     setCreditProposal(p);
     setShowAddReceipt(false);
     setShowAddCredit(false);
-    setNewReceipt({ receiptNo: '', receiptDate: new Date().toISOString().split('T')[0], paymentMode: 'Cash', amount: 0, remarks: '' });
+    setNewReceipt({ receiptDate: new Date().toISOString().split('T')[0], paymentMode: 'Cash', amount: 0, remarks: '' });
     setNewCredit({ creditAmount: 0, creditDays: 30, dueDate: '', remarks: '', status: 'Pending' });
     setCreditDialogOpen(true);
   };
