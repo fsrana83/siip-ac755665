@@ -285,6 +285,15 @@ const Quotations = () => {
                     <label className="text-sm text-foreground">Cyber Protection</label>
                   </div>
                 </div>
+                <div>
+                  <label className="block text-xs text-muted-foreground mb-1">Premium Frequency</label>
+                  <select value={premiumFrequency} onChange={e => setPremiumFrequency(e.target.value as PremiumFrequency)}
+                    className="w-full px-3 py-2.5 bg-muted/50 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50">
+                    {(['Annual', 'Semi-Annual', 'Quarterly', 'Monthly', 'Single'] as PremiumFrequency[]).map(f => (
+                      <option key={f} value={f}>{f}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               {/* Step 3: Breakdown */}
