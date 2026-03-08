@@ -103,6 +103,7 @@ const Policies = () => {
                 <th className="text-left px-4 py-3">Product</th>
                 <th className="text-right px-4 py-3">Sum Assured</th>
                 <th className="text-right px-4 py-3">Premium</th>
+                <th className="text-left px-4 py-3">Frequency</th>
                 <th className="text-left px-4 py-3">Commencement</th>
                 <th className="text-left px-4 py-3">Expiry</th>
                 <th className="text-left px-4 py-3">Status</th>
