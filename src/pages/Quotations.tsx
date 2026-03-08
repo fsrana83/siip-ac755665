@@ -143,24 +143,74 @@ const Quotations = () => {
                 </div>
                 {addingClient ? (
                   <form onSubmit={handleAddClient} className="grid grid-cols-2 gap-3 p-4 bg-muted/30 border border-border rounded-lg">
-                    {[
-                      { name: 'fullName', label: 'Full Name', placeholder: 'Ahmed Al Balushi', span: 2 },
-                      { name: 'gender', label: 'Gender', placeholder: 'Male' },
-                      { name: 'dob', label: 'Date of Birth', type: 'date' },
-                      { name: 'nationality', label: 'Nationality', placeholder: 'Omani' },
-                      { name: 'idType', label: 'ID Type', placeholder: 'National ID' },
-                      { name: 'idNumber', label: 'ID Number', placeholder: '12345678' },
-                      { name: 'phone', label: 'Phone', placeholder: '+968 9123 4567' },
-                      { name: 'email', label: 'Email', type: 'email', placeholder: 'name@email.com', span: 2 },
-                    ].map(f => (
-                      <div key={f.name} className={f.span === 2 ? 'col-span-2' : ''}>
-                        <label className="block text-xs text-muted-foreground mb-1">{f.label}</label>
-                        <input type={f.type || 'text'} placeholder={f.placeholder} required
-                          value={(newClient as any)[f.name]}
-                          onChange={e => setNewClient(prev => ({ ...prev, [f.name]: e.target.value }))}
-                          className="w-full px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" />
-                      </div>
-                    ))}
+                    <div className="col-span-2">
+                      <label className="block text-xs text-muted-foreground mb-1">Full Name</label>
+                      <input type="text" placeholder="Ahmed Al Balushi" required value={newClient.fullName}
+                        onChange={e => setNewClient(prev => ({ ...prev, fullName: e.target.value }))}
+                        className="w-full px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-muted-foreground mb-1">Gender</label>
+                      <select value={newClient.gender} onChange={e => setNewClient(prev => ({ ...prev, gender: e.target.value }))}
+                        className="w-full px-3 py-2.5 bg-muted/50 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50">
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-muted-foreground mb-1">Date of Birth</label>
+                      <input type="date" required value={newClient.dob}
+                        onChange={e => setNewClient(prev => ({ ...prev, dob: e.target.value }))}
+                        className="w-full px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-muted-foreground mb-1">Nationality</label>
+                      <select value={newClient.nationality} onChange={e => setNewClient(prev => ({ ...prev, nationality: e.target.value }))}
+                        className="w-full px-3 py-2.5 bg-muted/50 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50">
+                        <option value="Omani">Omani</option>
+                        <option value="Emirati">Emirati</option>
+                        <option value="Saudi">Saudi</option>
+                        <option value="Bahraini">Bahraini</option>
+                        <option value="Kuwaiti">Kuwaiti</option>
+                        <option value="Qatari">Qatari</option>
+                        <option value="Indian">Indian</option>
+                        <option value="Pakistani">Pakistani</option>
+                        <option value="Bangladeshi">Bangladeshi</option>
+                        <option value="Filipino">Filipino</option>
+                        <option value="Egyptian">Egyptian</option>
+                        <option value="Jordanian">Jordanian</option>
+                        <option value="British">British</option>
+                        <option value="American">American</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-muted-foreground mb-1">ID Type</label>
+                      <select value={newClient.idType} onChange={e => setNewClient(prev => ({ ...prev, idType: e.target.value }))}
+                        className="w-full px-3 py-2.5 bg-muted/50 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50">
+                        <option value="National ID">National ID</option>
+                        <option value="Passport">Passport</option>
+                        <option value="Resident Card">Resident Card</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-muted-foreground mb-1">ID Number</label>
+                      <input type="text" placeholder="12345678" required value={newClient.idNumber}
+                        onChange={e => setNewClient(prev => ({ ...prev, idNumber: e.target.value }))}
+                        className="w-full px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-muted-foreground mb-1">Phone</label>
+                      <input type="text" placeholder="+968 9123 4567" required value={newClient.phone}
+                        onChange={e => setNewClient(prev => ({ ...prev, phone: e.target.value }))}
+                        className="w-full px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                    </div>
+                    <div className="col-span-2">
+                      <label className="block text-xs text-muted-foreground mb-1">Email</label>
+                      <input type="email" placeholder="name@email.com" required value={newClient.email}
+                        onChange={e => setNewClient(prev => ({ ...prev, email: e.target.value }))}
+                        className="w-full px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                    </div>
                     <div className="col-span-2">
                       <button type="submit" className="w-full py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90">Add Client & Select</button>
                     </div>
