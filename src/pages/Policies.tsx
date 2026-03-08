@@ -117,6 +117,7 @@ const Policies = () => {
                   <td className="px-4 py-3 text-sm text-muted-foreground">{p.productName}</td>
                   <td className="px-4 py-3 text-sm text-foreground text-right">OMR {p.sumAssured.toLocaleString()}</td>
                   <td className="px-4 py-3 text-sm text-foreground text-right">OMR {p.totalPremium.toFixed(3)}</td>
+                  <td className="px-4 py-3"><span className="px-2 py-0.5 bg-accent text-accent-foreground rounded-full text-xs font-medium">{p.premiumFrequency}</span></td>
                   <td className="px-4 py-3 text-sm text-muted-foreground">{p.commencementDate}</td>
                   <td className="px-4 py-3 text-sm text-muted-foreground">{p.expiryDate}</td>
                   <td className="px-4 py-3">
