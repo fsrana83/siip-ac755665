@@ -59,7 +59,14 @@ const Proposals = () => {
     setCreditDialogOpen(true);
   };
 
-  const canApproveUW = uwReview.clientVerified && uwReview.quotationReviewed && uwReview.documentsChecked && uwReview.medicalReviewed && uwReview.riskRating !== '' && uwReview.riskRating !== 'Declined';
+  const getClientKyc = (name: string) => {
+    const client = clients.find(c => c.fullName === name);
+    return client?.kycStatus === 'Approved';
+  };
+
+  const clientKycApproved = uwProposal ? getClientKyc(uwProposal.clientName) : false;
+
+  const canApproveUW = uwReview.clientVerified && uwReview.quotationReviewed && uwReview.documentsChecked && uwReview.medicalReviewed && uwReview.riskRating !== '' && uwReview.riskRating !== 'Declined' && clientKycApproved;
 
   const handleUWApprove = () => {
     if (!uwProposal) return;
@@ -348,12 +355,21 @@ const Proposals = () => {
                 </div>
               </div>
 
+              {/* KYC Warning */}
+              {!clientKycApproved && (
+                <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-sm text-destructive font-medium">
+                  ⚠ Client KYC is not approved. Proposal cannot be approved until KYC status is "Approved".
+                </div>
+              )}
+
               {/* Progress */}
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <CheckCircle className={`w-3.5 h-3.5 ${canApproveUW ? 'text-emerald-500' : ''}`} />
                 <span>Checklist: {[uwReview.clientVerified, uwReview.quotationReviewed, uwReview.documentsChecked, uwReview.medicalReviewed].filter(Boolean).length}/4</span>
                 <span className="text-border">|</span>
                 <span>Risk: {uwReview.riskRating || 'Not set'}</span>
+                <span className="text-border">|</span>
+                <span>KYC: {clientKycApproved ? '✓ Approved' : '✗ Not Approved'}</span>
               </div>
 
               {/* Actions */}
