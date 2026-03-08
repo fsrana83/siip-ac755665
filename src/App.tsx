@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import Layout from "@/components/Layout";
 import Login from "@/pages/Login";
 import Dashboard from "@/pages/Dashboard";
@@ -17,6 +18,7 @@ import Accounting from "@/pages/Accounting";
 import VATReports from "@/pages/VATReports";
 import Reports from "@/pages/Reports";
 import Admin from "@/pages/Admin";
+import Developer from "@/pages/Developer";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
