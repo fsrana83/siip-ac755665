@@ -386,7 +386,7 @@ const CreditControl = () => {
                         </div>
                       </div>
                       <div className="flex gap-2">
-                        <button onClick={handleAddReceipt} disabled={!newReceipt.receiptNo || newReceipt.amount <= 0}
+                        <button onClick={handleAddReceipt} disabled={newReceipt.amount <= 0}
                           className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-medium hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed">Add Receipt</button>
                         <button onClick={() => setShowAddReceipt(false)} className="px-4 py-2 bg-muted border border-border rounded-lg text-sm text-foreground hover:bg-muted/80">Cancel</button>
                       </div>
