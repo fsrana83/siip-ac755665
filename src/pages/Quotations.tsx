@@ -361,6 +361,7 @@ const Quotations = () => {
                 <th className="text-left px-4 py-3">Product</th>
                 <th className="text-right px-4 py-3">Sum Assured</th>
                 <th className="text-right px-4 py-3">Annual Premium</th>
+                <th className="text-left px-4 py-3">Frequency</th>
                 <th className="text-left px-4 py-3">Status</th>
                 <th className="text-left px-4 py-3">Date</th>
                 <th className="text-center px-4 py-3">Actions</th>
