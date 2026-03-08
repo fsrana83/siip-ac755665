@@ -15,7 +15,7 @@ export interface Quotation {
   productName: string;
   sumAssured: number;
   totalPremium: number;
-  status: 'Draft' | 'Converted';
+  status: 'Draft' | 'Converted' | 'Void';
   createdBy: string;
   createdAt: string;
 }
