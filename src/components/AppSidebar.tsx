@@ -16,6 +16,7 @@ const navItems = [
   { path: '/policies', label: 'Policies', icon: Shield, tab: 'policies' },
   { path: '/claims', label: 'Claims', icon: AlertTriangle, tab: 'claims' },
   { path: '/reinsurance', label: 'Reinsurance', icon: Building2, tab: 'reinsurance' },
+  { path: '/credit-control', label: 'Credit Control', icon: CreditCard, tab: 'credit-control' },
   { path: '/accounting', label: 'Accounting', icon: Landmark, tab: 'accounting' },
   { path: '/vat', label: 'VAT Reports', icon: Receipt, tab: 'vat' },
   { path: '/reports', label: 'Reports', icon: FileBarChart, tab: 'reports' },
