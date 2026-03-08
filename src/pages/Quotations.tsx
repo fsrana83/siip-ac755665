@@ -43,7 +43,7 @@ const Quotations = () => {
   const [medicalStep, setMedicalStep] = useState(0); // 0 = intro, 1 = filling
 
   const selectedClient = clients.find(c => c.clientId === selectedClientId);
-  const selectedProduct = PRODUCTS.find(p => p.id === selectedProductId);
+  const selectedProduct = activeProducts.find(p => p.id === selectedProductId);
   const clientAge = useMemo(() => selectedClient ? calculateAge(selectedClient.dob) : 0, [selectedClient]);
 
   const premium: PremiumBreakdown | null = useMemo(() => {
