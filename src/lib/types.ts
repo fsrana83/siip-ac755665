@@ -25,6 +25,7 @@ export interface Quotation {
   productName: string;
   sumAssured: number;
   totalPremium: number;
+  premiumFrequency: PremiumFrequency;
   status: 'Draft' | 'Converted' | 'Void';
   createdBy: string;
   createdAt: string;
