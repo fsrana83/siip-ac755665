@@ -31,18 +31,27 @@ export interface UWReview {
   clientVerified: boolean;
   quotationReviewed: boolean;
   documentsChecked: boolean;
-  medicalApproved: boolean;
-  medicalQuestions: MedicalQuestion[];
+  medicalReviewed: boolean;
   uwRemarks: string;
   riskRating: 'Standard' | 'Substandard' | 'Declined' | '';
 }
 
-export interface CreditReview {
+export interface ReceiptEntry {
+  id: string;
   receiptNo: string;
   receiptDate: string;
-  paymentMode: 'Cash' | 'Cheque' | 'Bank Transfer' | 'Online' | '';
-  amountReceived: number;
-  creditRemarks: string;
+  paymentMode: 'Cash' | 'Cheque' | 'Bank Transfer' | 'Online';
+  amount: number;
+  remarks: string;
+}
+
+export interface CreditEntry {
+  id: string;
+  creditAmount: number;
+  creditDays: number;
+  dueDate: string;
+  remarks: string;
+  status: 'Pending' | 'Settled';
 }
 
 export interface Proposal {
@@ -53,8 +62,11 @@ export interface Proposal {
   uwDecision: string;
   status: 'Pending UW' | 'UW Approved' | 'Credit Approved' | 'Policy Issued';
   createdAt: string;
+  medicalQuestions: MedicalQuestion[];
   uwReview?: UWReview;
-  creditReview?: CreditReview;
+  receipts: ReceiptEntry[];
+  credits: CreditEntry[];
+  totalPremiumDue: number;
 }
 
 export interface Policy {
