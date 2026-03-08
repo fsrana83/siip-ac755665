@@ -27,6 +27,46 @@ export const mockClaims: Claim[] = [
   { id: '1', claimRef: 'CL-2026-0001', policyNo: 'PL-2026-0001', claimant: 'Ahmed Al Balushi', claimType: 'Death', amountClaimed: 100000, status: 'Under Assessment', claimDate: '2026-03-05' },
 ];
 
+export interface ReinsuranceCession {
+  id: string;
+  cessionRef: string;
+  policyNo: string;
+  reinsurer: string;
+  treatyName: string;
+  cededPremium: number;
+  cededSA: number;
+  retentionPct: number;
+  cessionPct: number;
+  status: 'Active' | 'Settled' | 'Void';
+  effectiveDate: string;
+}
+
+export const mockReinsurance: ReinsuranceCession[] = [
+  { id: '1', cessionRef: 'RI-2026-0001', policyNo: 'PL-2026-0001', reinsurer: 'Swiss Re', treatyName: 'Surplus Treaty 2026', cededPremium: 66.188, cededSA: 50000, retentionPct: 50, cessionPct: 50, status: 'Active', effectiveDate: '2026-01-20' },
+  { id: '2', cessionRef: 'RI-2026-0002', policyNo: 'PL-2026-0001', reinsurer: 'Munich Re', treatyName: 'Quota Share 2026', cededPremium: 26.475, cededSA: 20000, retentionPct: 80, cessionPct: 20, status: 'Active', effectiveDate: '2026-01-20' },
+];
+
+export interface JournalEntry {
+  id: string;
+  voucherNo: string;
+  date: string;
+  description: string;
+  account: string;
+  debit: number;
+  credit: number;
+  reference: string;
+  status: 'Posted' | 'Draft' | 'Reversed';
+}
+
+export const mockJournalEntries: JournalEntry[] = [
+  { id: '1', voucherNo: 'JV-2026-0001', date: '2026-01-20', description: 'Premium received - PL-2026-0001', account: 'Premium Income', debit: 0, credit: 132.375, reference: 'PL-2026-0001', status: 'Posted' },
+  { id: '2', voucherNo: 'JV-2026-0002', date: '2026-01-20', description: 'Premium receivable - PL-2026-0001', account: 'Accounts Receivable', debit: 132.375, credit: 0, reference: 'PL-2026-0001', status: 'Posted' },
+  { id: '3', voucherNo: 'JV-2026-0003', date: '2026-01-20', description: 'RI cession premium - Swiss Re', account: 'RI Premium Payable', debit: 0, credit: 66.188, reference: 'RI-2026-0001', status: 'Posted' },
+  { id: '4', voucherNo: 'JV-2026-0004', date: '2026-01-20', description: 'RI cession expense', account: 'RI Cession Expense', debit: 66.188, credit: 0, reference: 'RI-2026-0001', status: 'Posted' },
+  { id: '5', voucherNo: 'JV-2026-0005', date: '2026-01-20', description: 'VAT on premium', account: 'VAT Output', debit: 0, credit: 6.619, reference: 'PL-2026-0001', status: 'Posted' },
+  { id: '6', voucherNo: 'JV-2026-0006', date: '2026-02-01', description: 'Commission payable', account: 'Commission Expense', debit: 13.238, credit: 0, reference: 'PL-2026-0001', status: 'Draft' },
+];
+
 export const dashboardStats = {
   totalPolicies: 1,
   activePolicies: 1,
