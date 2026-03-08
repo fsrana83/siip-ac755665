@@ -102,6 +102,7 @@ const Quotations = () => {
     setProposals(prev => [...prev, {
       id: String(proposals.length + 1), proposalNo, quotRef: convertQuotation.quotRef,
       clientName: convertQuotation.clientName, uwDecision: 'Pending', status: 'Pending UW' as const,
+      premiumFrequency: convertQuotation.premiumFrequency,
       createdAt: new Date().toISOString().split('T')[0],
       medicalQuestions: [...medicalQuestions],
       receipts: [], credits: [],
