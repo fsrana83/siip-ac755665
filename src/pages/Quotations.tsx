@@ -251,7 +251,7 @@ const Quotations = () => {
                     <select value={selectedProductId} onChange={e => setSelectedProductId(e.target.value)}
                       className="w-full px-3 py-2.5 bg-muted/50 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50">
                       <option value="">— Select product —</option>
-                      {PRODUCTS.filter(p => p.active).map(p => (
+                      {activeProducts.map(p => (
                         <option key={p.id} value={p.id}>{p.name} (Age {p.minAge}-{p.maxAge}, Term {p.minTerm}-{p.maxTerm}yr)</option>
                       ))}
                     </select>
