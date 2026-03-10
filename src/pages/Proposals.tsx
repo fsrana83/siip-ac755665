@@ -46,7 +46,18 @@ const Proposals = () => {
   };
 
   const clientKycApproved = uwProposal ? getClientKyc(uwProposal.clientName) : false;
-  const canApproveUW = uwReview.clientVerified && uwReview.quotationReviewed && uwReview.documentsChecked && uwReview.medicalReviewed && uwReview.riskRating !== '' && uwReview.riskRating !== 'Declined' && clientKycApproved;
+
+  // Check if medical exam is required and its status
+  const getMedicalStatus = (proposalNo: string) => {
+    const exam = medicalExams.find(m => m.proposalNo === proposalNo);
+    if (!exam) return null; // no medical required
+    return exam;
+  };
+
+  const uwMedicalExam = uwProposal ? getMedicalStatus(uwProposal.proposalNo) : null;
+  const medicalCleared = !uwMedicalExam || uwMedicalExam.status === 'Completed' || uwMedicalExam.status === 'Waived';
+
+  const canApproveUW = uwReview.clientVerified && uwReview.quotationReviewed && uwReview.documentsChecked && uwReview.medicalReviewed && uwReview.riskRating !== '' && uwReview.riskRating !== 'Declined' && clientKycApproved && medicalCleared;
 
   const handleUWApprove = () => {
     if (!uwProposal) return;
