@@ -20,6 +20,7 @@ import CreditControl from "@/pages/CreditControl";
 import Accounting from "@/pages/Accounting";
 import VATReports from "@/pages/VATReports";
 import Reports from "@/pages/Reports";
+import Medical from "@/pages/Medical";
 import Admin from "@/pages/Admin";
 import Developer from "@/pages/Developer";
 import NotFound from "@/pages/NotFound";
