@@ -120,6 +120,22 @@ export interface Claim {
   claimDate: string;
 }
 
+export interface MedicalExam {
+  id: string;
+  proposalNo: string;
+  clientName: string;
+  productName: string;
+  sumAssured: number;
+  medicalRequired: boolean;
+  medicalCenter: string;
+  bookingDate: string;
+  bookingTime: string;
+  bookingRemarks: string;
+  status: 'Pending' | 'Booked' | 'Completed' | 'Waived';
+  createdAt: string;
+  results?: string;
+}
+
 export const ROLE_LABELS: Record<UserRole, string> = {
   admin: 'Administrator',
   coo: 'COO',
@@ -141,6 +157,7 @@ export const TAB_ACCESS: Record<string, UserRole[] | null> = {
   'credit-control': ['admin', 'coo', 'credit'],
   accounting: ['admin', 'coo', 'credit'],
   vat: ['admin', 'coo', 'credit', 'actuary', 'manager'],
+  medical: ['admin', 'uw', 'coo', 'manager'],
   reports: null,
   admin: ['admin'],
   developer: ['admin'],

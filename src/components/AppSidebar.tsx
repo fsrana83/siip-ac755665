@@ -5,7 +5,7 @@ import logo from '@/assets/logo.png';
 import {
   LayoutDashboard, FileText, Users, ClipboardList, Shield,
   AlertTriangle, Building2, Receipt, FileBarChart, Settings,
-  LogOut, ChevronRight, Landmark, Code2, CreditCard
+  LogOut, ChevronRight, Landmark, Code2, CreditCard, Stethoscope
 } from 'lucide-react';
 
 const navItems = [
@@ -19,6 +19,7 @@ const navItems = [
   { path: '/credit-control', label: 'Credit Control', icon: CreditCard, tab: 'credit-control' },
   { path: '/accounting', label: 'Accounting', icon: Landmark, tab: 'accounting' },
   { path: '/vat', label: 'VAT Reports', icon: Receipt, tab: 'vat' },
+  { path: '/medical', label: 'Medical', icon: Stethoscope, tab: 'medical' },
   { path: '/reports', label: 'Reports', icon: FileBarChart, tab: 'reports' },
   { path: '/admin', label: 'Admin Panel', icon: Settings, tab: 'admin' },
   { path: '/developer', label: 'Developer', icon: Code2, tab: 'developer' },

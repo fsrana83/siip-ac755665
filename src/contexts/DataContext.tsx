@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, ReactNode } from 'react';
-import { Quotation, Proposal, Policy, Client } from '@/lib/types';
+import { Quotation, Proposal, Policy, Client, MedicalExam } from '@/lib/types';
 import { mockQuotations, mockProposals, mockPolicies, mockClients } from '@/lib/mockData';
 
 interface DataContextType {
@@ -11,6 +11,8 @@ interface DataContextType {
   setPolicies: React.Dispatch<React.SetStateAction<Policy[]>>;
   clients: Client[];
   setClients: React.Dispatch<React.SetStateAction<Client[]>>;
+  medicalExams: MedicalExam[];
+  setMedicalExams: React.Dispatch<React.SetStateAction<MedicalExam[]>>;
 }
 
 const DataContext = createContext<DataContextType | null>(null);
@@ -26,9 +28,10 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
   const [proposals, setProposals] = useState<Proposal[]>(mockProposals);
   const [policies, setPolicies] = useState<Policy[]>(mockPolicies);
   const [clients, setClients] = useState<Client[]>(mockClients);
+  const [medicalExams, setMedicalExams] = useState<MedicalExam[]>([]);
 
   return (
-    <DataContext.Provider value={{ quotations, setQuotations, proposals, setProposals, policies, setPolicies, clients, setClients }}>
+    <DataContext.Provider value={{ quotations, setQuotations, proposals, setProposals, policies, setPolicies, clients, setClients, medicalExams, setMedicalExams }}>
       {children}
     </DataContext.Provider>
   );

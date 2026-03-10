@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Users, Building2, Receipt, Package, Shield, Plus, Trash2, Edit, History, Save } from 'lucide-react';
+import { Users, Building2, Receipt, Package, Shield, Plus, Trash2, Edit, History, Save, Stethoscope } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useConfig, COVER_TYPES, ProductConfig } from '@/contexts/ConfigContext';
@@ -10,6 +10,7 @@ const tabs = [
   { id: 'company', label: 'Company Setup', icon: Building2 },
   { id: 'vat', label: 'VAT Configuration', icon: Receipt },
   { id: 'products', label: 'Product Setup', icon: Package },
+  { id: 'medical', label: 'Medical Rules', icon: Stethoscope },
   { id: 'reinsurance', label: 'Reinsurance Setup', icon: Shield },
 ];
 
@@ -101,6 +102,7 @@ const Admin = () => {
       active: true,
       allowedFrequencies: ['Annual', 'Semi-Annual', 'Quarterly', 'Monthly'],
       calcMethod: 'Rate per Mille',
+      medicalSAThreshold: 100000,
     });
     setIsNewProduct(true);
     setProductDialog(true);
@@ -515,6 +517,11 @@ const Admin = () => {
                       className="rounded border-border" />
                     <label className="text-sm text-foreground">Active</label>
                   </div>
+                  <div>
+                    <label className="block text-xs text-muted-foreground mb-1">Medical SA Threshold (OMR)</label>
+                    <input type="number" value={editProduct.medicalSAThreshold} onChange={e => setEditProduct({ ...editProduct, medicalSAThreshold: Number(e.target.value) })} className={inputClass} placeholder="100000" />
+                    <p className="text-[10px] text-muted-foreground mt-1">SA above this amount requires medical examination</p>
+                  </div>
                   <button type="submit" className="w-full py-2.5 bg-primary text-primary-foreground rounded-lg font-medium text-sm hover:bg-primary/90 flex items-center justify-center gap-2">
                     <Save className="w-4 h-4" /> {isNewProduct ? 'Create Product' : 'Save Product'}
                   </button>
@@ -522,6 +529,54 @@ const Admin = () => {
               )}
             </DialogContent>
           </Dialog>
+        </div>
+      )}
+
+      {activeTab === 'medical' && (
+        <div className="space-y-4">
+          <div className="glass-card">
+            <div className="p-4 border-b border-border/50">
+              <h3 className="text-sm font-semibold text-foreground">Medical Exam Requirements by Product</h3>
+              <p className="text-xs text-muted-foreground mt-1">
+                If Sum Assured exceeds the threshold, a medical examination is required before underwriting approval.
+              </p>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="table-header">
+                    <th className="text-left px-4 py-3">Product ID</th>
+                    <th className="text-left px-4 py-3">Product Name</th>
+                    <th className="text-right px-4 py-3">Medical SA Threshold (OMR)</th>
+                    <th className="text-left px-4 py-3">Status</th>
+                    <th className="text-center px-4 py-3">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {products.map(p => (
+                    <tr key={p.id} className="border-b border-border/30 hover:bg-muted/30 transition-colors">
+                      <td className="px-4 py-3 text-sm font-medium text-primary">{p.id}</td>
+                      <td className="px-4 py-3 text-sm text-foreground">{p.name}</td>
+                      <td className="px-4 py-3 text-sm text-foreground text-right font-medium">OMR {p.medicalSAThreshold.toLocaleString()}</td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${p.active ? 'status-active' : 'status-draft'}`}>{p.active ? 'Active' : 'Inactive'}</span>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <button onClick={() => { setEditProduct({ ...p }); setIsNewProduct(false); setProductDialog(true); }}
+                          className="text-primary hover:text-primary/80"><Edit className="w-4 h-4" /></button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div className="p-4 bg-muted/30 border border-border rounded-lg">
+            <p className="text-xs text-muted-foreground">
+              <Stethoscope className="w-3.5 h-3.5 inline mr-1" />
+              Medical threshold is configured per product. When a proposal&apos;s SA exceeds the threshold, the system flags it as requiring medical examination.
+            </p>
+          </div>
         </div>
       )}
 

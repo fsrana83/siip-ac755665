@@ -15,6 +15,7 @@ export interface VATEntry {
 export interface ProductConfig extends Product {
   allowedFrequencies: PremiumFrequency[];
   calcMethod: 'Rate per Mille' | 'Flat Rate' | 'Age-Rated';
+  medicalSAThreshold: number; // SA above this requires medical exam
 }
 
 interface ConfigContextType {
@@ -49,6 +50,7 @@ const initialProducts: ProductConfig[] = DEFAULT_PRODUCTS.map(p => ({
   ...p,
   allowedFrequencies: ['Annual', 'Semi-Annual', 'Quarterly', 'Monthly'] as PremiumFrequency[],
   calcMethod: 'Rate per Mille' as const,
+  medicalSAThreshold: 100000,
 }));
 
 export const ConfigProvider = ({ children }: { children: ReactNode }) => {

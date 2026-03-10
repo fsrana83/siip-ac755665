@@ -18,7 +18,7 @@ const statusStyles: Record<string, string> = {
 
 const Quotations = () => {
   const [search, setSearch] = useState('');
-  const { quotations, setQuotations, clients, setClients, proposals, setProposals } = useData();
+  const { quotations, setQuotations, clients, setClients, proposals, setProposals, medicalExams, setMedicalExams } = useData();
   const { products: configProducts } = useConfig();
   const activeProducts = configProducts.filter(p => p.active);
   const [open, setOpen] = useState(false);
@@ -112,8 +112,30 @@ const Quotations = () => {
       totalPremiumDue: convertQuotation.totalPremium,
     }]);
     setQuotations(prev => prev.map(x => x.id === convertQuotation.id ? { ...x, status: 'Converted' as const } : x));
+
+    // Check if medical exam is required based on product threshold
+    const product = configProducts.find(p => p.name === convertQuotation.productName);
+    if (product && convertQuotation.sumAssured > product.medicalSAThreshold) {
+      setMedicalExams(prev => [...prev, {
+        id: `MED-${String(medicalExams.length + 1).padStart(4, '0')}`,
+        proposalNo,
+        clientName: convertQuotation.clientName,
+        productName: convertQuotation.productName,
+        sumAssured: convertQuotation.sumAssured,
+        medicalRequired: true,
+        medicalCenter: '',
+        bookingDate: '',
+        bookingTime: '',
+        bookingRemarks: '',
+        status: 'Pending',
+        createdAt: new Date().toISOString().split('T')[0],
+      }]);
+      toast({ title: 'Converted to proposal', description: `${convertQuotation.quotRef} → ${proposalNo} — ⚠ Medical exam required (SA exceeds threshold)` });
+    } else {
+      toast({ title: 'Converted to proposal', description: `${convertQuotation.quotRef} → ${proposalNo} (Medical submitted)` });
+    }
+
     setConvertOpen(false);
-    toast({ title: 'Converted to proposal', description: `${convertQuotation.quotRef} → ${proposalNo} (Medical submitted)` });
   };
 
   const filtered = quotations.filter(q =>

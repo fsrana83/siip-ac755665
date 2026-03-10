@@ -1,6 +1,7 @@
-import { Search, MoreHorizontal, ClipboardCheck, FileText, CheckCircle, ArrowRight } from 'lucide-react';
+import { Search, MoreHorizontal, ClipboardCheck, FileText, CheckCircle, ArrowRight, Stethoscope } from 'lucide-react';
 import { useState } from 'react';
 import { useData } from '@/contexts/DataContext';
+import { useConfig } from '@/contexts/ConfigContext';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
@@ -25,7 +26,8 @@ const statusStyles: Record<string, string> = {
 
 const Proposals = () => {
   const [search, setSearch] = useState('');
-  const { proposals, setProposals, quotations, clients } = useData();
+  const { proposals, setProposals, quotations, clients, medicalExams } = useData();
+  const { products: configProducts } = useConfig();
   const { toast } = useToast();
 
   const [uwDialogOpen, setUwDialogOpen] = useState(false);
@@ -44,7 +46,18 @@ const Proposals = () => {
   };
 
   const clientKycApproved = uwProposal ? getClientKyc(uwProposal.clientName) : false;
-  const canApproveUW = uwReview.clientVerified && uwReview.quotationReviewed && uwReview.documentsChecked && uwReview.medicalReviewed && uwReview.riskRating !== '' && uwReview.riskRating !== 'Declined' && clientKycApproved;
+
+  // Check if medical exam is required and its status
+  const getMedicalStatus = (proposalNo: string) => {
+    const exam = medicalExams.find(m => m.proposalNo === proposalNo);
+    if (!exam) return null; // no medical required
+    return exam;
+  };
+
+  const uwMedicalExam = uwProposal ? getMedicalStatus(uwProposal.proposalNo) : null;
+  const medicalCleared = !uwMedicalExam || uwMedicalExam.status === 'Completed' || uwMedicalExam.status === 'Waived';
+
+  const canApproveUW = uwReview.clientVerified && uwReview.quotationReviewed && uwReview.documentsChecked && uwReview.medicalReviewed && uwReview.riskRating !== '' && uwReview.riskRating !== 'Declined' && clientKycApproved && medicalCleared;
 
   const handleUWApprove = () => {
     if (!uwProposal) return;
@@ -102,6 +115,7 @@ const Proposals = () => {
                 <th className="text-left px-4 py-3">Quotation</th>
                 <th className="text-left px-4 py-3">Client</th>
                 <th className="text-left px-4 py-3">UW Decision</th>
+                <th className="text-left px-4 py-3">Medical</th>
                 <th className="text-left px-4 py-3">Status</th>
                 <th className="text-left px-4 py-3">Date</th>
                 <th className="text-center px-4 py-3">Actions</th>
@@ -110,12 +124,27 @@ const Proposals = () => {
             <tbody>
               {filtered.map(p => {
                 const actions = getActions(p);
+                const medExam = getMedicalStatus(p.proposalNo);
                 return (
                   <tr key={p.id} className="border-b border-border/30 hover:bg-muted/30 transition-colors">
                     <td className="px-4 py-3 text-sm font-medium text-primary">{p.proposalNo}</td>
                     <td className="px-4 py-3 text-sm text-muted-foreground">{p.quotRef}</td>
                     <td className="px-4 py-3 text-sm text-foreground">{p.clientName}</td>
                     <td className="px-4 py-3 text-sm text-muted-foreground">{p.uwDecision}</td>
+                    <td className="px-4 py-3">
+                      {medExam ? (
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                          medExam.status === 'Completed' ? 'status-active' :
+                          medExam.status === 'Waived' ? 'status-draft' :
+                          medExam.status === 'Booked' ? 'bg-info/15 text-info border border-info/20' :
+                          'status-pending'
+                        }`}>
+                          <Stethoscope className="w-3 h-3" /> {medExam.status}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground/50">N/A</span>
+                      )}
+                    </td>
                     <td className="px-4 py-3">
                       <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statusStyles[p.status]}`}>{p.status}</span>
                     </td>
@@ -250,7 +279,14 @@ const Proposals = () => {
 
               {!clientKycApproved && (
                 <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-sm text-destructive font-medium">
-                  ⚠ Client KYC is not approved. Proposal cannot be approved until KYC status is "Approved".
+                  ⚠ Client KYC is not approved. Proposal cannot be approved until KYC status is &quot;Approved&quot;.
+                </div>
+              )}
+
+              {uwMedicalExam && !medicalCleared && (
+                <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg text-sm text-amber-700 font-medium flex items-center gap-2">
+                  <Stethoscope className="w-4 h-4" />
+                  Medical exam is required (SA exceeds threshold) — Status: {uwMedicalExam.status}. Complete or waive the medical exam before UW approval.
                 </div>
               )}
 
@@ -261,6 +297,8 @@ const Proposals = () => {
                 <span>Risk: {uwReview.riskRating || 'Not set'}</span>
                 <span className="text-border">|</span>
                 <span>KYC: {clientKycApproved ? '✓ Approved' : '✗ Not Approved'}</span>
+                <span className="text-border">|</span>
+                <span>Medical: {uwMedicalExam ? (medicalCleared ? '✓ Cleared' : `✗ ${uwMedicalExam.status}`) : '— Not required'}</span>
               </div>
 
               <div className="flex gap-3">
