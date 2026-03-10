@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Users, Building2, Receipt, Package, Shield, Plus, Trash2, Edit, History, Save } from 'lucide-react';
+import { Users, Building2, Receipt, Package, Shield, Plus, Trash2, Edit, History, Save, Stethoscope } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useConfig, COVER_TYPES, ProductConfig } from '@/contexts/ConfigContext';
@@ -10,6 +10,7 @@ const tabs = [
   { id: 'company', label: 'Company Setup', icon: Building2 },
   { id: 'vat', label: 'VAT Configuration', icon: Receipt },
   { id: 'products', label: 'Product Setup', icon: Package },
+  { id: 'medical', label: 'Medical Rules', icon: Stethoscope },
   { id: 'reinsurance', label: 'Reinsurance Setup', icon: Shield },
 ];
 
