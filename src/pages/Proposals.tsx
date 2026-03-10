@@ -1,6 +1,7 @@
 import { Search, MoreHorizontal, ClipboardCheck, FileText, CheckCircle, ArrowRight } from 'lucide-react';
 import { useState } from 'react';
 import { useData } from '@/contexts/DataContext';
+import { useConfig } from '@/contexts/ConfigContext';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
