@@ -532,6 +532,54 @@ const Admin = () => {
         </div>
       )}
 
+      {activeTab === 'medical' && (
+        <div className="space-y-4">
+          <div className="glass-card">
+            <div className="p-4 border-b border-border/50">
+              <h3 className="text-sm font-semibold text-foreground">Medical Exam Requirements by Product</h3>
+              <p className="text-xs text-muted-foreground mt-1">
+                If Sum Assured exceeds the threshold, a medical examination is required before underwriting approval.
+              </p>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="table-header">
+                    <th className="text-left px-4 py-3">Product ID</th>
+                    <th className="text-left px-4 py-3">Product Name</th>
+                    <th className="text-right px-4 py-3">Medical SA Threshold (OMR)</th>
+                    <th className="text-left px-4 py-3">Status</th>
+                    <th className="text-center px-4 py-3">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {products.map(p => (
+                    <tr key={p.id} className="border-b border-border/30 hover:bg-muted/30 transition-colors">
+                      <td className="px-4 py-3 text-sm font-medium text-primary">{p.id}</td>
+                      <td className="px-4 py-3 text-sm text-foreground">{p.name}</td>
+                      <td className="px-4 py-3 text-sm text-foreground text-right font-medium">OMR {p.medicalSAThreshold.toLocaleString()}</td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${p.active ? 'status-active' : 'status-draft'}`}>{p.active ? 'Active' : 'Inactive'}</span>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <button onClick={() => { setEditProduct({ ...p }); setIsNewProduct(false); setProductDialog(true); }}
+                          className="text-primary hover:text-primary/80"><Edit className="w-4 h-4" /></button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div className="p-4 bg-muted/30 border border-border rounded-lg">
+            <p className="text-xs text-muted-foreground">
+              <Stethoscope className="w-3.5 h-3.5 inline mr-1" />
+              Medical threshold is configured per product. When a proposal&apos;s SA exceeds the threshold, the system flags it as requiring medical examination.
+            </p>
+          </div>
+        </div>
+      )}
+
       {activeTab === 'reinsurance' && (
         <div className="space-y-4">
           {/* Sub-tabs */}
