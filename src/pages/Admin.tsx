@@ -517,6 +517,11 @@ const Admin = () => {
                       className="rounded border-border" />
                     <label className="text-sm text-foreground">Active</label>
                   </div>
+                  <div>
+                    <label className="block text-xs text-muted-foreground mb-1">Medical SA Threshold (OMR)</label>
+                    <input type="number" value={editProduct.medicalSAThreshold} onChange={e => setEditProduct({ ...editProduct, medicalSAThreshold: Number(e.target.value) })} className={inputClass} placeholder="100000" />
+                    <p className="text-[10px] text-muted-foreground mt-1">SA above this amount requires medical examination</p>
+                  </div>
                   <button type="submit" className="w-full py-2.5 bg-primary text-primary-foreground rounded-lg font-medium text-sm hover:bg-primary/90 flex items-center justify-center gap-2">
                     <Save className="w-4 h-4" /> {isNewProduct ? 'Create Product' : 'Save Product'}
                   </button>

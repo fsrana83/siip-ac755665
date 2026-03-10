@@ -46,6 +46,7 @@ const AppRoutes = () => {
         <Route path="/accounting" element={<Accounting />} />
         <Route path="/vat" element={<VATReports />} />
         <Route path="/reports" element={<Reports />} />
+        <Route path="/medical" element={<Medical />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/developer" element={<Developer />} />
         <Route path="*" element={<NotFound />} />
