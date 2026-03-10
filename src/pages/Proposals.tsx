@@ -115,6 +115,7 @@ const Proposals = () => {
                 <th className="text-left px-4 py-3">Quotation</th>
                 <th className="text-left px-4 py-3">Client</th>
                 <th className="text-left px-4 py-3">UW Decision</th>
+                <th className="text-left px-4 py-3">Medical</th>
                 <th className="text-left px-4 py-3">Status</th>
                 <th className="text-left px-4 py-3">Date</th>
                 <th className="text-center px-4 py-3">Actions</th>
@@ -123,12 +124,27 @@ const Proposals = () => {
             <tbody>
               {filtered.map(p => {
                 const actions = getActions(p);
+                const medExam = getMedicalStatus(p.proposalNo);
                 return (
                   <tr key={p.id} className="border-b border-border/30 hover:bg-muted/30 transition-colors">
                     <td className="px-4 py-3 text-sm font-medium text-primary">{p.proposalNo}</td>
                     <td className="px-4 py-3 text-sm text-muted-foreground">{p.quotRef}</td>
                     <td className="px-4 py-3 text-sm text-foreground">{p.clientName}</td>
                     <td className="px-4 py-3 text-sm text-muted-foreground">{p.uwDecision}</td>
+                    <td className="px-4 py-3">
+                      {medExam ? (
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                          medExam.status === 'Completed' ? 'status-active' :
+                          medExam.status === 'Waived' ? 'status-draft' :
+                          medExam.status === 'Booked' ? 'bg-info/15 text-info border border-info/20' :
+                          'status-pending'
+                        }`}>
+                          <Stethoscope className="w-3 h-3" /> {medExam.status}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground/50">N/A</span>
+                      )}
+                    </td>
                     <td className="px-4 py-3">
                       <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statusStyles[p.status]}`}>{p.status}</span>
                     </td>
