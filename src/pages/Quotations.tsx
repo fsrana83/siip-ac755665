@@ -18,7 +18,7 @@ const statusStyles: Record<string, string> = {
 
 const Quotations = () => {
   const [search, setSearch] = useState('');
-  const { quotations, setQuotations, clients, setClients, proposals, setProposals } = useData();
+  const { quotations, setQuotations, clients, setClients, proposals, setProposals, medicalExams, setMedicalExams } = useData();
   const { products: configProducts } = useConfig();
   const activeProducts = configProducts.filter(p => p.active);
   const [open, setOpen] = useState(false);
