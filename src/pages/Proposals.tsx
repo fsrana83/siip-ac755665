@@ -26,7 +26,8 @@ const statusStyles: Record<string, string> = {
 
 const Proposals = () => {
   const [search, setSearch] = useState('');
-  const { proposals, setProposals, quotations, clients } = useData();
+  const { proposals, setProposals, quotations, clients, medicalExams } = useData();
+  const { products: configProducts } = useConfig();
   const { toast } = useToast();
 
   const [uwDialogOpen, setUwDialogOpen] = useState(false);
