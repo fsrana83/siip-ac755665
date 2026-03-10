@@ -6,6 +6,7 @@ import { Switch } from '@/components/ui/switch';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
 import { useData } from '@/contexts/DataContext';
+import { useConfig } from '@/contexts/ConfigContext';
 import { PRODUCTS, calculatePremium, calculateAge, PremiumBreakdown } from '@/lib/premiumEngine';
 import { DEFAULT_MEDICAL_QUESTIONS } from '@/lib/medicalQuestions';
 import { useConfig } from '@/contexts/ConfigContext';
