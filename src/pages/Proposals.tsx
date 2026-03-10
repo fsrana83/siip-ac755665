@@ -1,4 +1,4 @@
-import { Search, MoreHorizontal, ClipboardCheck, FileText, CheckCircle, ArrowRight } from 'lucide-react';
+import { Search, MoreHorizontal, ClipboardCheck, FileText, CheckCircle, ArrowRight, Stethoscope } from 'lucide-react';
 import { useState } from 'react';
 import { useData } from '@/contexts/DataContext';
 import { useConfig } from '@/contexts/ConfigContext';
