@@ -15,6 +15,7 @@ export interface VATEntry {
 export interface ProductConfig extends Product {
   allowedFrequencies: PremiumFrequency[];
   calcMethod: 'Rate per Mille' | 'Flat Rate' | 'Age-Rated';
+  medicalSAThreshold: number; // SA above this requires medical exam
 }
 
 interface ConfigContextType {
