@@ -102,6 +102,7 @@ const Admin = () => {
       active: true,
       allowedFrequencies: ['Annual', 'Semi-Annual', 'Quarterly', 'Monthly'],
       calcMethod: 'Rate per Mille',
+      medicalSAThreshold: 100000,
     });
     setIsNewProduct(true);
     setProductDialog(true);
