@@ -297,6 +297,8 @@ const Proposals = () => {
                 <span>Risk: {uwReview.riskRating || 'Not set'}</span>
                 <span className="text-border">|</span>
                 <span>KYC: {clientKycApproved ? '✓ Approved' : '✗ Not Approved'}</span>
+                <span className="text-border">|</span>
+                <span>Medical: {uwMedicalExam ? (medicalCleared ? '✓ Cleared' : `✗ ${uwMedicalExam.status}`) : '— Not required'}</span>
               </div>
 
               <div className="flex gap-3">
