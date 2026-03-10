@@ -279,7 +279,14 @@ const Proposals = () => {
 
               {!clientKycApproved && (
                 <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-sm text-destructive font-medium">
-                  ⚠ Client KYC is not approved. Proposal cannot be approved until KYC status is "Approved".
+                  ⚠ Client KYC is not approved. Proposal cannot be approved until KYC status is &quot;Approved&quot;.
+                </div>
+              )}
+
+              {uwMedicalExam && !medicalCleared && (
+                <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg text-sm text-amber-700 font-medium flex items-center gap-2">
+                  <Stethoscope className="w-4 h-4" />
+                  Medical exam is required (SA exceeds threshold) — Status: {uwMedicalExam.status}. Complete or waive the medical exam before UW approval.
                 </div>
               )}
 
