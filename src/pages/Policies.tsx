@@ -26,7 +26,8 @@ const Policies = () => {
     expiry.setFullYear(expiry.getFullYear() + 10);
     setPolicies(prev => [...prev, {
       id: String(policies.length + 1), policyNo, proposalNo: proposal.proposalNo,
-      clientName: proposal.clientName, productName: quot?.productName || 'N/A',
+      clientName: proposal.clientName, policyHolder: proposal.clientName,
+      productName: quot?.productName || 'N/A',
       sumAssured: quot?.sumAssured || 0, totalPremium: quot?.totalPremium || 0,
       premiumFrequency: proposal.premiumFrequency,
       commencementDate: today, expiryDate: expiry.toISOString().split('T')[0], status: 'Active' as const,
