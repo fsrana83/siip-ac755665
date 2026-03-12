@@ -26,7 +26,8 @@ const Policies = () => {
     expiry.setFullYear(expiry.getFullYear() + 10);
     setPolicies(prev => [...prev, {
       id: String(policies.length + 1), policyNo, proposalNo: proposal.proposalNo,
-      clientName: proposal.clientName, productName: quot?.productName || 'N/A',
+      clientName: proposal.clientName, policyHolder: proposal.clientName,
+      productName: quot?.productName || 'N/A',
       sumAssured: quot?.sumAssured || 0, totalPremium: quot?.totalPremium || 0,
       premiumFrequency: proposal.premiumFrequency,
       commencementDate: today, expiryDate: expiry.toISOString().split('T')[0], status: 'Active' as const,
@@ -100,6 +101,7 @@ const Policies = () => {
               <tr className="table-header">
                 <th className="text-left px-4 py-3">Policy No</th>
                 <th className="text-left px-4 py-3">Client</th>
+                <th className="text-left px-4 py-3">Policy Holder</th>
                 <th className="text-left px-4 py-3">Product</th>
                 <th className="text-right px-4 py-3">Sum Assured</th>
                 <th className="text-right px-4 py-3">Premium</th>
@@ -114,6 +116,7 @@ const Policies = () => {
                 <tr key={p.id} className="border-b border-border/30 hover:bg-muted/30 transition-colors">
                   <td className="px-4 py-3 text-sm font-medium text-primary">{p.policyNo}</td>
                   <td className="px-4 py-3 text-sm text-foreground">{p.clientName}</td>
+                  <td className="px-4 py-3 text-sm text-foreground">{p.policyHolder}</td>
                   <td className="px-4 py-3 text-sm text-muted-foreground">{p.productName}</td>
                   <td className="px-4 py-3 text-sm text-foreground text-right">OMR {p.sumAssured.toLocaleString()}</td>
                   <td className="px-4 py-3 text-sm text-foreground text-right">OMR {p.totalPremium.toFixed(3)}</td>

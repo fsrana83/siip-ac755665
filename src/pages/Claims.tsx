@@ -4,6 +4,7 @@ import { Claim } from '@/lib/types';
 import { Search, Plus } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
+import { useData } from '@/contexts/DataContext';
 
 const statusStyles: Record<string, string> = {
   'Registered': 'status-draft',
@@ -17,7 +18,11 @@ const Claims = () => {
   const [search, setSearch] = useState('');
   const [data, setData] = useState<Claim[]>(mockClaims);
   const [open, setOpen] = useState(false);
+  const [selectedPolicyNo, setSelectedPolicyNo] = useState('');
   const { toast } = useToast();
+  const { policies } = useData();
+
+  const selectedPolicy = policies.find(p => p.policyNo === selectedPolicyNo);
 
   const filtered = data.filter(c =>
     c.claimRef.toLowerCase().includes(search.toLowerCase()) ||
@@ -27,12 +32,13 @@ const Claims = () => {
 
   const handleAdd = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!selectedPolicy) return;
     const fd = new FormData(e.currentTarget);
     const newClaim: Claim = {
       id: String(data.length + 1),
       claimRef: `CL-2026-${String(data.length + 1).padStart(4, '0')}`,
-      policyNo: fd.get('policyNo') as string,
-      claimant: fd.get('claimant') as string,
+      policyNo: selectedPolicy.policyNo,
+      claimant: selectedPolicy.policyHolder,
       claimType: fd.get('claimType') as string,
       amountClaimed: Number(fd.get('amountClaimed')),
       status: 'Registered',
@@ -40,6 +46,7 @@ const Claims = () => {
     };
     setData([...data, newClaim]);
     setOpen(false);
+    setSelectedPolicyNo('');
     toast({ title: 'Claim registered', description: `${newClaim.claimRef} for ${newClaim.claimant}` });
   };
 
@@ -50,7 +57,7 @@ const Claims = () => {
           <h1 className="text-2xl font-display font-bold text-foreground">Claims</h1>
           <p className="text-sm text-muted-foreground mt-1">Claims register and settlement tracking</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setSelectedPolicyNo(''); }}>
           <DialogTrigger asChild>
             <button className="flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium text-sm hover:bg-primary/90 transition-all glow-border">
               <Plus className="w-4 h-4" /> New Claim
@@ -59,19 +66,59 @@ const Claims = () => {
           <DialogContent>
             <DialogHeader><DialogTitle>Register New Claim</DialogTitle></DialogHeader>
             <form onSubmit={handleAdd} className="space-y-4">
-              {[
-                { name: 'policyNo', label: 'Policy No', placeholder: 'PL-2026-0001' },
-                { name: 'claimant', label: 'Claimant Name', placeholder: 'Ahmed Al Balushi' },
-                { name: 'claimType', label: 'Claim Type', placeholder: 'Death / PTD / Maturity' },
-                { name: 'amountClaimed', label: 'Amount Claimed (OMR)', placeholder: '100000', type: 'number' },
-              ].map(f => (
-                <div key={f.name}>
-                  <label className="block text-xs text-muted-foreground mb-1">{f.label}</label>
-                  <input name={f.name} type={f.type || 'text'} placeholder={f.placeholder} required step={f.type === 'number' ? '0.001' : undefined}
-                    className="w-full px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" />
+              {/* Policy Selection */}
+              <div>
+                <label className="block text-xs text-muted-foreground mb-1">Policy No</label>
+                <select
+                  value={selectedPolicyNo}
+                  onChange={(e) => setSelectedPolicyNo(e.target.value)}
+                  required
+                  className="w-full px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                >
+                  <option value="">Select a policy...</option>
+                  {policies.filter(p => p.status === 'Active').map(p => (
+                    <option key={p.id} value={p.policyNo}>{p.policyNo} — {p.clientName}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Auto-filled details */}
+              {selectedPolicy && (
+                <div className="grid grid-cols-2 gap-3 p-3 bg-muted/30 border border-border/50 rounded-lg">
+                  <div>
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Policy Holder</span>
+                    <p className="text-sm font-medium text-foreground">{selectedPolicy.policyHolder}</p>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Product</span>
+                    <p className="text-sm font-medium text-foreground">{selectedPolicy.productName}</p>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Sum Assured</span>
+                    <p className="text-sm font-medium text-foreground">OMR {selectedPolicy.sumAssured.toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Premium</span>
+                    <p className="text-sm font-medium text-foreground">OMR {selectedPolicy.totalPremium.toFixed(3)}</p>
+                  </div>
                 </div>
-              ))}
-              <button type="submit" className="w-full py-2.5 bg-primary text-primary-foreground rounded-lg font-medium text-sm hover:bg-primary/90">Register Claim</button>
+              )}
+
+              <div>
+                <label className="block text-xs text-muted-foreground mb-1">Claim Type</label>
+                <input name="claimType" type="text" placeholder="Death / PTD / Maturity" required
+                  className="w-full px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" />
+              </div>
+              <div>
+                <label className="block text-xs text-muted-foreground mb-1">Amount Claimed (OMR)</label>
+                <input name="amountClaimed" type="number" placeholder="100000" required step="0.001"
+                  className="w-full px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" />
+              </div>
+
+              <button type="submit" disabled={!selectedPolicy}
+                className="w-full py-2.5 bg-primary text-primary-foreground rounded-lg font-medium text-sm hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed">
+                Register Claim
+              </button>
             </form>
           </DialogContent>
         </Dialog>
@@ -102,7 +149,7 @@ const Claims = () => {
               {filtered.map(c => (
                 <tr key={c.id} className="border-b border-border/30 hover:bg-muted/30 transition-colors">
                   <td className="px-4 py-3 text-sm font-medium text-primary">{c.claimRef}</td>
-                  <td className="px-4 py-3 text-sm text-muted-foreground">{c.policyNo}</td>
+                  <td className="px-4 py-3 text-sm text-primary font-medium">{c.policyNo}</td>
                   <td className="px-4 py-3 text-sm text-foreground">{c.claimant}</td>
                   <td className="px-4 py-3 text-sm text-muted-foreground">{c.claimType}</td>
                   <td className="px-4 py-3 text-sm text-foreground text-right">OMR {c.amountClaimed.toLocaleString()}</td>
