@@ -87,6 +87,7 @@ export interface Policy {
   policyNo: string;
   proposalNo: string;
   clientName: string;
+  policyHolder: string;
   productName: string;
   sumAssured: number;
   totalPremium: number;
