@@ -116,6 +116,7 @@ const Policies = () => {
                 <tr key={p.id} className="border-b border-border/30 hover:bg-muted/30 transition-colors">
                   <td className="px-4 py-3 text-sm font-medium text-primary">{p.policyNo}</td>
                   <td className="px-4 py-3 text-sm text-foreground">{p.clientName}</td>
+                  <td className="px-4 py-3 text-sm text-foreground">{p.policyHolder}</td>
                   <td className="px-4 py-3 text-sm text-muted-foreground">{p.productName}</td>
                   <td className="px-4 py-3 text-sm text-foreground text-right">OMR {p.sumAssured.toLocaleString()}</td>
                   <td className="px-4 py-3 text-sm text-foreground text-right">OMR {p.totalPremium.toFixed(3)}</td>

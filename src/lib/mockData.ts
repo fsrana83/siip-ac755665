@@ -13,7 +13,7 @@ export const mockProposals: Proposal[] = [
 ];
 
 export const mockPolicies: Policy[] = [
-  { id: '1', policyNo: 'PL-2026-0001', proposalNo: 'PP-2026-0001', clientName: 'Ahmed Al Balushi', productName: 'Term Life - Level', sumAssured: 100000, totalPremium: 132.375, premiumFrequency: 'Annual', commencementDate: '2026-01-20', expiryDate: '2036-01-20', status: 'Active' },
+  { id: '1', policyNo: 'PL-2026-0001', proposalNo: 'PP-2026-0001', clientName: 'Ahmed Al Balushi', policyHolder: 'Ahmed Al Balushi', productName: 'Term Life - Level', sumAssured: 100000, totalPremium: 132.375, premiumFrequency: 'Annual', commencementDate: '2026-01-20', expiryDate: '2036-01-20', status: 'Active' },
 ];
 
 export const mockClients: Client[] = [
