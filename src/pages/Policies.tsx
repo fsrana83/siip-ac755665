@@ -101,6 +101,7 @@ const Policies = () => {
               <tr className="table-header">
                 <th className="text-left px-4 py-3">Policy No</th>
                 <th className="text-left px-4 py-3">Client</th>
+                <th className="text-left px-4 py-3">Policy Holder</th>
                 <th className="text-left px-4 py-3">Product</th>
                 <th className="text-right px-4 py-3">Sum Assured</th>
                 <th className="text-right px-4 py-3">Premium</th>
