@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { mockClaims } from '@/lib/mockData';
-import { Claim } from '@/lib/types';
+import { Claim, Policy } from '@/lib/types';
 import { Search, Plus } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
@@ -19,6 +19,7 @@ const Claims = () => {
   const [data, setData] = useState<Claim[]>(mockClaims);
   const [open, setOpen] = useState(false);
   const [selectedPolicyNo, setSelectedPolicyNo] = useState('');
+  const [viewPolicy, setViewPolicy] = useState<Policy | null>(null);
   const { toast } = useToast();
   const { policies } = useData();
 
@@ -149,7 +150,19 @@ const Claims = () => {
               {filtered.map(c => (
                 <tr key={c.id} className="border-b border-border/30 hover:bg-muted/30 transition-colors">
                   <td className="px-4 py-3 text-sm font-medium text-primary">{c.claimRef}</td>
-                  <td className="px-4 py-3 text-sm text-primary font-medium">{c.policyNo}</td>
+                  <td className="px-4 py-3 text-sm">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const pol = policies.find(p => p.policyNo === c.policyNo);
+                        if (pol) setViewPolicy(pol);
+                        else toast({ title: 'Policy not found', description: c.policyNo, variant: 'destructive' });
+                      }}
+                      className="text-primary font-medium hover:underline focus:outline-none focus:underline"
+                    >
+                      {c.policyNo}
+                    </button>
+                  </td>
                   <td className="px-4 py-3 text-sm text-foreground">{c.claimant}</td>
                   <td className="px-4 py-3 text-sm text-muted-foreground">{c.claimType}</td>
                   <td className="px-4 py-3 text-sm text-foreground text-right">OMR {c.amountClaimed.toLocaleString()}</td>
@@ -163,6 +176,69 @@ const Claims = () => {
           </table>
         </div>
       </div>
+
+      {/* Policy Details Dialog */}
+      <Dialog open={!!viewPolicy} onOpenChange={(v) => { if (!v) setViewPolicy(null); }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Policy Details — {viewPolicy?.policyNo}</DialogTitle>
+          </DialogHeader>
+          {viewPolicy && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 bg-muted/30 border border-border/50 rounded-lg">
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Policy No</span>
+                  <p className="text-sm font-medium text-foreground">{viewPolicy.policyNo}</p>
+                </div>
+                <div className="p-3 bg-muted/30 border border-border/50 rounded-lg">
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Proposal No</span>
+                  <p className="text-sm font-medium text-foreground">{viewPolicy.proposalNo}</p>
+                </div>
+                <div className="p-3 bg-muted/30 border border-border/50 rounded-lg">
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Client Name</span>
+                  <p className="text-sm font-medium text-foreground">{viewPolicy.clientName}</p>
+                </div>
+                <div className="p-3 bg-muted/30 border border-border/50 rounded-lg">
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Policy Holder</span>
+                  <p className="text-sm font-medium text-foreground">{viewPolicy.policyHolder}</p>
+                </div>
+                <div className="p-3 bg-muted/30 border border-border/50 rounded-lg col-span-2">
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Product</span>
+                  <p className="text-sm font-medium text-foreground">{viewPolicy.productName}</p>
+                </div>
+                <div className="p-3 bg-muted/30 border border-border/50 rounded-lg">
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Sum Assured</span>
+                  <p className="text-sm font-medium text-foreground">OMR {viewPolicy.sumAssured.toLocaleString()}</p>
+                </div>
+                <div className="p-3 bg-muted/30 border border-border/50 rounded-lg">
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Total Premium</span>
+                  <p className="text-sm font-medium text-foreground">OMR {viewPolicy.totalPremium.toFixed(3)}</p>
+                </div>
+                <div className="p-3 bg-muted/30 border border-border/50 rounded-lg">
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Premium Frequency</span>
+                  <p className="text-sm font-medium text-foreground">{viewPolicy.premiumFrequency}</p>
+                </div>
+                <div className="p-3 bg-muted/30 border border-border/50 rounded-lg">
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Status</span>
+                  <p className="text-sm font-medium text-foreground">
+                    <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${viewPolicy.status === 'Active' ? 'bg-success/15 text-success border border-success/20' : 'bg-destructive/15 text-destructive border border-destructive/20'}`}>
+                      {viewPolicy.status}
+                    </span>
+                  </p>
+                </div>
+                <div className="p-3 bg-muted/30 border border-border/50 rounded-lg">
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Commencement Date</span>
+                  <p className="text-sm font-medium text-foreground">{viewPolicy.commencementDate}</p>
+                </div>
+                <div className="p-3 bg-muted/30 border border-border/50 rounded-lg">
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Expiry Date</span>
+                  <p className="text-sm font-medium text-foreground">{viewPolicy.expiryDate}</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
