@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Users, Building2, Receipt, Package, Shield, Plus, Trash2, Edit, History, Save, Stethoscope } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { useConfig, COVER_TYPES, ProductConfig } from '@/contexts/ConfigContext';
+import { useConfig, COVER_TYPES, ProductConfig, Reinsurer, Treaty, TreatyParticipant, TreatyType } from '@/contexts/ConfigContext';
 import { PremiumFrequency } from '@/lib/types';
 
 const tabs = [
@@ -21,62 +21,13 @@ const mockUsers = [
   { username: 'uw01', fullName: 'Hamed Al Lawati', role: 'uw', active: true },
 ];
 
-interface Reinsurer {
-  id: string;
-  code: string;
-  name: string;
-  country: string;
-  rating: string;
-  contactPerson: string;
-  email: string;
-  status: 'Active' | 'Inactive';
-}
-
-interface Treaty {
-  id: string;
-  code: string;
-  name: string;
-  type: 'Surplus' | 'Quota Share' | 'Excess of Loss' | 'Facultative';
-  effectiveFrom: string;
-  effectiveTo: string;
-  retentionLimit: number;
-  status: 'Active' | 'Expired' | 'Draft';
-}
-
-interface TreatyParticipant {
-  id: string;
-  treatyCode: string;
-  reinsurerCode: string;
-  reinsurerName: string;
-  sharePct: number;
-  maxLiability: number;
-}
-
-const initialReinsurers: Reinsurer[] = [
-  { id: '1', code: 'RE-2026-0001', name: 'Swiss Re', country: 'Switzerland', rating: 'AA-', contactPerson: 'Hans Mueller', email: 'hans@swissre.com', status: 'Active' },
-  { id: '2', code: 'RE-2026-0002', name: 'Munich Re', country: 'Germany', rating: 'AA-', contactPerson: 'Klaus Schmidt', email: 'klaus@munichre.com', status: 'Active' },
-  { id: '3', code: 'RE-2026-0003', name: 'Hannover Re', country: 'Germany', rating: 'A+', contactPerson: 'Eva Wagner', email: 'eva@hannover-re.com', status: 'Active' },
-  { id: '4', code: 'RE-2026-0004', name: 'SCOR', country: 'France', rating: 'A+', contactPerson: 'Pierre Dupont', email: 'pierre@scor.com', status: 'Inactive' },
-];
-
-const initialTreaties: Treaty[] = [
-  { id: '1', code: 'TRT-2026-0001', name: 'Surplus Treaty 2026', type: 'Surplus', effectiveFrom: '2026-01-01', effectiveTo: '2026-12-31', retentionLimit: 50000, status: 'Active' },
-  { id: '2', code: 'TRT-2026-0002', name: 'Quota Share 2026', type: 'Quota Share', effectiveFrom: '2026-01-01', effectiveTo: '2026-12-31', retentionLimit: 100000, status: 'Active' },
-  { id: '3', code: 'TRT-2026-0003', name: 'XOL Treaty 2026', type: 'Excess of Loss', effectiveFrom: '2026-01-01', effectiveTo: '2026-12-31', retentionLimit: 200000, status: 'Draft' },
-];
-
-const initialParticipants: TreatyParticipant[] = [
-  { id: '1', treatyCode: 'TRT-2026-0001', reinsurerCode: 'RE-2026-0001', reinsurerName: 'Swiss Re', sharePct: 50, maxLiability: 500000 },
-  { id: '2', treatyCode: 'TRT-2026-0001', reinsurerCode: 'RE-2026-0002', reinsurerName: 'Munich Re', sharePct: 30, maxLiability: 300000 },
-  { id: '3', treatyCode: 'TRT-2026-0001', reinsurerCode: 'RE-2026-0003', reinsurerName: 'Hannover Re', sharePct: 20, maxLiability: 200000 },
-  { id: '4', treatyCode: 'TRT-2026-0002', reinsurerCode: 'RE-2026-0001', reinsurerName: 'Swiss Re', sharePct: 40, maxLiability: 400000 },
-  { id: '5', treatyCode: 'TRT-2026-0002', reinsurerCode: 'RE-2026-0002', reinsurerName: 'Munich Re', sharePct: 60, maxLiability: 600000 },
-];
+// Reinsurance setup interfaces and seeds now live in ConfigContext (shared with Reinsurance module).
 
 const Admin = () => {
   const [activeTab, setActiveTab] = useState('users');
   const { toast } = useToast();
-  const { vatEntries, currentVATRate, addVATChange, products, setProducts } = useConfig();
+  const { vatEntries, currentVATRate, addVATChange, products, setProducts,
+    reinsurers, setReinsurers, treaties, setTreaties, participants, setParticipants } = useConfig();
 
   // VAT state
   const [vatDialog, setVatDialog] = useState(false);
@@ -107,11 +58,8 @@ const Admin = () => {
     setIsNewProduct(true);
     setProductDialog(true);
   };
-  // Reinsurance state
+  // Reinsurance UI state (data lives in ConfigContext)
   const [riSubTab, setRiSubTab] = useState<'reinsurers' | 'treaties' | 'participants'>('reinsurers');
-  const [reinsurers, setReinsurers] = useState<Reinsurer[]>(initialReinsurers);
-  const [treaties, setTreaties] = useState<Treaty[]>(initialTreaties);
-  const [participants, setParticipants] = useState<TreatyParticipant[]>(initialParticipants);
 
   // Dialogs
   const [reinsurerDialog, setReinsurerDialog] = useState(false);
