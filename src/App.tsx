@@ -21,6 +21,7 @@ import Accounting from "@/pages/Accounting";
 import VATReports from "@/pages/VATReports";
 import Reports from "@/pages/Reports";
 import Medical from "@/pages/Medical";
+import Actuary from "@/pages/Actuary";
 import Admin from "@/pages/Admin";
 import Developer from "@/pages/Developer";
 import NotFound from "@/pages/NotFound";
@@ -47,6 +48,7 @@ const AppRoutes = () => {
         <Route path="/vat" element={<VATReports />} />
         <Route path="/reports" element={<Reports />} />
         <Route path="/medical" element={<Medical />} />
+        <Route path="/actuary" element={<Actuary />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/developer" element={<Developer />} />
         <Route path="*" element={<NotFound />} />
