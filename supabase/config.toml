@@ -1,0 +1,4 @@
+project_id = "ngfhdqjujsrplixryblf"
+
+[functions.actuary-ai]
+verify_jwt = false

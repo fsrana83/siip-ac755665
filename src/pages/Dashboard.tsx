@@ -1,5 +1,9 @@
-import { dashboardStats } from '@/lib/mockData';
+import { Link } from 'react-router-dom';
+import { dashboardStats, mockReinsurance } from '@/lib/mockData';
 import { useAuth } from '@/contexts/AuthContext';
+import { useConfig } from '@/contexts/ConfigContext';
+import { useData } from '@/contexts/DataContext';
+import { computeCapacityStatuses } from '@/lib/capacityUtils';
 import {
   Shield, FileText, Users, AlertTriangle,
   TrendingUp, DollarSign, ClipboardList, Building2
@@ -18,6 +22,12 @@ const statCards = [
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const { treaties } = useConfig();
+  const { policies } = useData();
+  const policyClientMap = Object.fromEntries(policies.map(p => [p.policyNo, p.policyHolder || p.clientName]));
+  const capacityStatuses = computeCapacityStatuses(treaties, mockReinsurance, policyClientMap);
+  const exceedances = capacityStatuses.filter(c => c.exceeded);
+  const warnings = capacityStatuses.filter(c => c.warning && !c.exceeded);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -25,6 +35,36 @@ const Dashboard = () => {
         <h1 className="text-2xl font-display font-bold text-foreground">Dashboard</h1>
         <p className="text-sm text-muted-foreground mt-1">Welcome back, {user?.fullName}</p>
       </div>
+
+      {(exceedances.length > 0 || warnings.length > 0) && (
+        <div className="glass-card p-4 border border-destructive/30">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-display font-semibold text-foreground flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 text-destructive" /> Reinsurance Capacity Alerts
+            </h3>
+            <Link to="/reinsurance" className="text-xs text-primary hover:underline">View Reinsurance →</Link>
+          </div>
+          <div className="space-y-2">
+            {exceedances.map(c => (
+              <div key={c.treatyCode} className="text-xs p-2 rounded bg-destructive/10 border border-destructive/30">
+                <p className="font-medium text-destructive">
+                  ⚠ {c.treatyName} ({c.treatyType}) — Capacity exceeded ({c.utilizationPct.toFixed(1)}%)
+                </p>
+                {c.exceedingClients.length > 0 && (
+                  <p className="text-muted-foreground mt-0.5">
+                    Clients: {c.exceedingClients.map(x => x.clientName).join(', ')}
+                  </p>
+                )}
+              </div>
+            ))}
+            {warnings.map(c => (
+              <div key={c.treatyCode} className="text-xs p-2 rounded bg-warning/10 border border-warning/30 text-foreground">
+                {c.treatyName} approaching limit — {c.utilizationPct.toFixed(1)}% used
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {statCards.map(card => (
