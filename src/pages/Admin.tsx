@@ -95,6 +95,7 @@ const Admin = () => {
       effectiveFrom: fd.get('effectiveFrom') as string,
       effectiveTo: fd.get('effectiveTo') as string,
       retentionLimit: Number(fd.get('retentionLimit')),
+      treatyCapacity: Number(fd.get('treatyCapacity')),
       status: 'Draft',
     };
     setTreaties(prev => [...prev, newT]);
@@ -606,7 +607,8 @@ const Admin = () => {
                       <th className="text-left px-4 py-3">Type</th>
                       <th className="text-left px-4 py-3">Effective From</th>
                       <th className="text-left px-4 py-3">Effective To</th>
-                      <th className="text-right px-4 py-3">Retention Limit (OMR)</th>
+                      <th className="text-right px-4 py-3">Retention (OMR)</th>
+                      <th className="text-right px-4 py-3">Capacity (OMR)</th>
                       <th className="text-left px-4 py-3">Status</th>
                       <th className="text-center px-4 py-3">Action</th>
                     </tr>
@@ -620,6 +622,7 @@ const Admin = () => {
                         <td className="px-4 py-3 text-sm text-muted-foreground">{t.effectiveFrom}</td>
                         <td className="px-4 py-3 text-sm text-muted-foreground">{t.effectiveTo}</td>
                         <td className="px-4 py-3 text-sm text-foreground text-right">OMR {t.retentionLimit.toLocaleString()}</td>
+                        <td className="px-4 py-3 text-sm text-foreground text-right font-medium">OMR {t.treatyCapacity.toLocaleString()}</td>
                         <td className="px-4 py-3">
                           <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${t.status === 'Active' ? 'status-active' : t.status === 'Draft' ? 'status-draft' : 'status-pending'}`}>{t.status}</span>
                         </td>
@@ -722,8 +725,9 @@ const Admin = () => {
             <div>
               <label className="block text-xs text-muted-foreground mb-1">Type</label>
               <select name="type" required className={inputClass}>
-                <option value="Surplus">Surplus</option>
                 <option value="Quota Share">Quota Share</option>
+                <option value="Surplus">Surplus</option>
+                <option value="Quota Share Cum Surplus">Quota Share Cum Surplus</option>
                 <option value="Excess of Loss">Excess of Loss</option>
                 <option value="Facultative">Facultative</option>
               </select>
@@ -738,9 +742,15 @@ const Admin = () => {
                 <input name="effectiveTo" type="date" required className={inputClass} />
               </div>
             </div>
-            <div>
-              <label className="block text-xs text-muted-foreground mb-1">Retention Limit (OMR)</label>
-              <input name="retentionLimit" type="number" step="0.001" placeholder="50000" required className={inputClass} />
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs text-muted-foreground mb-1">Retention Limit (OMR)</label>
+                <input name="retentionLimit" type="number" step="0.001" placeholder="50000" required className={inputClass} />
+              </div>
+              <div>
+                <label className="block text-xs text-muted-foreground mb-1">Treaty Capacity (OMR)</label>
+                <input name="treatyCapacity" type="number" step="0.001" placeholder="1000000" required className={inputClass} />
+              </div>
             </div>
             <button type="submit" className="w-full py-2.5 bg-primary text-primary-foreground rounded-lg font-medium text-sm hover:bg-primary/90">Create Treaty</button>
           </form>
