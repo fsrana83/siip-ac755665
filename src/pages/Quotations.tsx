@@ -46,6 +46,17 @@ const Quotations = () => {
   const [medicalQuestions, setMedicalQuestions] = useState<MedicalQuestion[]>([]);
   const [medicalStep, setMedicalStep] = useState(0); // 0 = intro, 1 = filling
 
+  // Receipt dialog state
+  const [receiptOpen, setReceiptOpen] = useState(false);
+  const [receiptQuotation, setReceiptQuotation] = useState<Quotation | null>(null);
+  const [newReceipt, setNewReceipt] = useState<{ receiptDate: string; paymentMode: 'Cash' | 'Cheque' | 'Bank Transfer' | 'Online'; amount: number; remarks: string }>({
+    receiptDate: new Date().toISOString().split('T')[0],
+    paymentMode: 'Cash',
+    amount: 0,
+    remarks: '',
+  });
+
+
   const selectedClient = clients.find(c => c.clientId === selectedClientId);
   const selectedProduct = activeProducts.find(p => p.id === selectedProductId);
   const clientAge = useMemo(() => selectedClient ? calculateAge(selectedClient.dob) : 0, [selectedClient]);
