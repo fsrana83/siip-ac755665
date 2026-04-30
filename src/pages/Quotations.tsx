@@ -457,11 +457,17 @@ const Quotations = () => {
                 <th className="text-left px-4 py-3">Frequency</th>
                 <th className="text-left px-4 py-3">Status</th>
                 <th className="text-left px-4 py-3">Date</th>
+                <th className="text-left px-4 py-3">Receipts</th>
                 <th className="text-center px-4 py-3">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map(q => (
+              {filtered.map(q => {
+                const receipts = q.receipts || [];
+                const pending = receipts.filter(r => r.status === 'Pending Approval').length;
+                const approved = receipts.filter(r => r.status === 'Approved').length;
+                const rejected = receipts.filter(r => r.status === 'Rejected').length;
+                return (
                 <tr key={q.id} className="border-b border-border/30 hover:bg-muted/30 transition-colors">
                   <td className="px-4 py-3 text-sm font-medium text-primary">{q.quotRef}</td>
                   <td className="px-4 py-3 text-sm text-foreground">{q.clientName}</td>
@@ -473,6 +479,17 @@ const Quotations = () => {
                     <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statusStyles[q.status]}`}>{q.status}</span>
                   </td>
                   <td className="px-4 py-3 text-sm text-muted-foreground">{q.createdAt}</td>
+                  <td className="px-4 py-3 text-xs">
+                    {receipts.length === 0 ? (
+                      <span className="text-muted-foreground/60">—</span>
+                    ) : (
+                      <div className="flex items-center gap-1 flex-wrap">
+                        {pending > 0 && <span className="px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-600 border border-amber-500/30">{pending} pending</span>}
+                        {approved > 0 && <span className="px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-600 border border-emerald-500/30">{approved} approved</span>}
+                        {rejected > 0 && <span className="px-1.5 py-0.5 rounded bg-destructive/10 text-destructive border border-destructive/20">{rejected} rejected</span>}
+                      </div>
+                    )}
+                  </td>
                   <td className="px-4 py-3 text-center">
                     {q.status === 'Draft' && (
                       <DropdownMenu>
@@ -482,6 +499,11 @@ const Quotations = () => {
                           </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          {canAddReceipt && (
+                            <DropdownMenuItem onClick={() => openReceiptDialog(q)} className="gap-2">
+                              <Receipt className="w-4 h-4" /> Add Receipt (optional)
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuItem onClick={() => openConvertDialog(q)} className="gap-2">
                             <ArrowRight className="w-4 h-4" /> Convert to Proposal
                           </DropdownMenuItem>
@@ -493,7 +515,8 @@ const Quotations = () => {
                     )}
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
