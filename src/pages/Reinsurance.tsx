@@ -497,6 +497,79 @@ const Reinsurance = () => {
           </table>
         </div>
       </div>
+      </div>
+
+      {/* Treaty Audit Log */}
+      <div className="glass-card">
+        <div className="p-4 border-b border-border/50 flex items-center gap-2">
+          <History className="w-4 h-4 text-primary" />
+          <h3 className="text-sm font-semibold text-foreground">Treaty Audit Log</h3>
+          <span className="text-xs text-muted-foreground ml-auto">{treatyAuditLog.length} entries</span>
+        </div>
+        <div className="overflow-x-auto max-h-96 overflow-y-auto">
+          <table className="w-full">
+            <thead className="sticky top-0 bg-background z-10">
+              <tr className="table-header">
+                <th className="text-left px-4 py-3">Timestamp</th>
+                <th className="text-left px-4 py-3">User</th>
+                <th className="text-left px-4 py-3">Treaty</th>
+                <th className="text-left px-4 py-3">Action</th>
+                <th className="text-left px-4 py-3">Changes</th>
+              </tr>
+            </thead>
+            <tbody>
+              {treatyAuditLog.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-4 py-6 text-center text-sm text-muted-foreground">No audit entries yet.</td>
+                </tr>
+              ) : treatyAuditLog.map(e => (
+                <tr key={e.id} className="border-b border-border/30">
+                  <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">{new Date(e.changedAt).toLocaleString()}</td>
+                  <td className="px-4 py-3 text-sm text-foreground">{e.changedBy}</td>
+                  <td className="px-4 py-3 text-sm text-foreground">{e.treatyCode} <span className="text-muted-foreground">— {e.treatyName}</span></td>
+                  <td className="px-4 py-3">
+                    <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${e.action === 'Delete' ? 'bg-destructive/10 text-destructive' : 'bg-primary/10 text-primary'}`}>
+                      {e.action}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-xs text-muted-foreground">
+                    {e.changes.map((c, i) => (
+                      <div key={i}>
+                        <span className="font-medium text-foreground">{c.field}:</span>{' '}
+                        <span className="line-through">{typeof c.from === 'number' ? c.from.toLocaleString() : c.from}</span>
+                        {' → '}
+                        <span className="text-foreground">{typeof c.to === 'number' ? c.to.toLocaleString() : c.to}</span>
+                      </div>
+                    ))}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <AlertDialog open={!!deleteTreatyId} onOpenChange={(v) => { if (!v) setDeleteTreatyId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete treaty?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {(() => {
+                const t = treaties.find(x => x.id === deleteTreatyId);
+                return t
+                  ? `This will permanently remove ${t.code} — ${t.name} and is recorded in the audit log. Treaties with active cessions cannot be deleted.`
+                  : 'Are you sure?';
+              })()}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
