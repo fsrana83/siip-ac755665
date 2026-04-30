@@ -135,6 +135,14 @@ export const ConfigProvider = ({ children }: { children: ReactNode }) => {
   const [reinsurers, setReinsurers] = useState<Reinsurer[]>(initialReinsurers);
   const [treaties, setTreaties] = useState<Treaty[]>(initialTreaties);
   const [participants, setParticipants] = useState<TreatyParticipant[]>(initialParticipants);
+  const [treatyAuditLog, setTreatyAuditLog] = useState<TreatyAuditEntry[]>([]);
+
+  const addTreatyAudit = (entry: Omit<TreatyAuditEntry, 'id' | 'changedAt'>) => {
+    setTreatyAuditLog(prev => [
+      { ...entry, id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, changedAt: new Date().toISOString() },
+      ...prev,
+    ]);
+  };
 
   const currentVATRate = (coverType: string): number => {
     const today = new Date().toISOString().split('T')[0];
