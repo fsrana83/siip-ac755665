@@ -21,6 +21,9 @@ const Quotations = () => {
   const [search, setSearch] = useState('');
   const { quotations, setQuotations, clients, setClients, proposals, setProposals, medicalExams, setMedicalExams } = useData();
   const { products: configProducts } = useConfig();
+  const { user } = useAuth();
+  const actor = user?.fullName || user?.username || 'sales';
+  const canAddReceipt = user?.role === 'admin' || user?.role === 'sales';
   const activeProducts = configProducts.filter(p => p.active);
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
