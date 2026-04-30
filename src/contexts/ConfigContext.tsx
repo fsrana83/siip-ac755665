@@ -52,6 +52,17 @@ export interface TreatyParticipant {
   maxLiability: number;
 }
 
+export interface TreatyAuditEntry {
+  id: string;
+  treatyId: string;
+  treatyCode: string;
+  treatyName: string;
+  action: 'Update' | 'Delete';
+  changedBy: string;
+  changedAt: string; // ISO timestamp
+  changes: { field: string; from: string | number; to: string | number }[];
+}
+
 interface ConfigContextType {
   vatEntries: VATEntry[];
   currentVATRate: (coverType: string) => number;
@@ -64,6 +75,8 @@ interface ConfigContextType {
   setTreaties: React.Dispatch<React.SetStateAction<Treaty[]>>;
   participants: TreatyParticipant[];
   setParticipants: React.Dispatch<React.SetStateAction<TreatyParticipant[]>>;
+  treatyAuditLog: TreatyAuditEntry[];
+  addTreatyAudit: (entry: Omit<TreatyAuditEntry, 'id' | 'changedAt'>) => void;
 }
 
 const ConfigContext = createContext<ConfigContextType | null>(null);
