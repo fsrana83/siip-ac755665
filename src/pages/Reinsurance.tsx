@@ -159,6 +159,87 @@ const Reinsurance = () => {
   const exceedances = capacityStatuses.filter(c => c.exceeded);
   const warnings = capacityStatuses.filter(c => c.warning && !c.exceeded);
 
+  // Active cessions per treaty name (used to disable delete)
+  const activeCessionsByTreatyName = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const c of data) {
+      if (c.status === 'Active') map[c.treatyName] = (map[c.treatyName] || 0) + 1;
+    }
+    return map;
+  }, [data]);
+
+  const filteredAuditLog = useMemo(() => {
+    const q = auditSearch.trim().toLowerCase();
+    return treatyAuditLog.filter(e => {
+      if (auditTreatyCode !== 'all' && e.treatyCode !== auditTreatyCode) return false;
+      if (auditAction !== 'all' && e.action !== auditAction) return false;
+      if (auditDateFrom && e.changedAt.slice(0, 10) < auditDateFrom) return false;
+      if (auditDateTo && e.changedAt.slice(0, 10) > auditDateTo) return false;
+      if (q) {
+        const hay = `${e.treatyCode} ${e.treatyName} ${e.changedBy} ${e.action} ${e.changes.map(c => `${c.field} ${c.from} ${c.to}`).join(' ')}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [treatyAuditLog, auditSearch, auditTreatyCode, auditAction, auditDateFrom, auditDateTo]);
+
+  const auditTreatyCodes = useMemo(
+    () => Array.from(new Set(treatyAuditLog.map(e => e.treatyCode))).sort(),
+    [treatyAuditLog],
+  );
+
+  const formatChanges = (changes: { field: string; from: string | number; to: string | number }[]) =>
+    changes.map(c => `${c.field}: ${c.from} → ${c.to}`).join('; ');
+
+  const exportAuditCSV = () => {
+    const headers = ['Timestamp', 'User', 'Treaty Code', 'Treaty Name', 'Action', 'Changes'];
+    const rows = filteredAuditLog.map(e => [
+      new Date(e.changedAt).toISOString(),
+      e.changedBy,
+      e.treatyCode,
+      e.treatyName,
+      e.action,
+      formatChanges(e.changes),
+    ]);
+    const escape = (v: string | number) => {
+      const s = String(v);
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const csv = [headers, ...rows].map(r => r.map(escape).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `treaty-audit-log-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast({ title: 'Exported', description: `${filteredAuditLog.length} audit entries exported as CSV.` });
+  };
+
+  const exportAuditPDF = () => {
+    const doc = new jsPDF({ orientation: 'landscape' });
+    doc.setFontSize(14);
+    doc.text('Treaty Audit Log', 14, 15);
+    doc.setFontSize(9);
+    doc.text(`Generated: ${new Date().toLocaleString()} • ${filteredAuditLog.length} entries`, 14, 22);
+    autoTable(doc, {
+      startY: 28,
+      head: [['Timestamp', 'User', 'Treaty', 'Action', 'Changes']],
+      body: filteredAuditLog.map(e => [
+        new Date(e.changedAt).toLocaleString(),
+        e.changedBy,
+        `${e.treatyCode} — ${e.treatyName}`,
+        e.action,
+        formatChanges(e.changes),
+      ]),
+      styles: { fontSize: 8, cellPadding: 2 },
+      headStyles: { fillColor: [37, 99, 235] },
+    });
+    doc.save(`treaty-audit-log-${new Date().toISOString().slice(0, 10)}.pdf`);
+    toast({ title: 'Exported', description: `${filteredAuditLog.length} audit entries exported as PDF.` });
+  };
+
+
   const selectedTreaty = treaties.find(t => t.code === selectedTreatyCode);
   const selectedTreatyParticipants = participants.filter(p => p.treatyCode === selectedTreatyCode);
 
