@@ -21,10 +21,14 @@ const Reinsurance = () => {
   const [open, setOpen] = useState(false);
   const [selectedTreatyCode, setSelectedTreatyCode] = useState('');
   const { toast } = useToast();
-  const { reinsurers, treaties, setTreaties, participants } = useConfig();
+  const { reinsurers, treaties, setTreaties, participants, treatyAuditLog, addTreatyAudit } = useConfig();
   const { policies } = useData();
+  const { user } = useAuth();
   const [editingTreatyId, setEditingTreatyId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<{ treatyCapacity: number; effectiveFrom: string; effectiveTo: string }>({ treatyCapacity: 0, effectiveFrom: '', effectiveTo: '' });
+  const [deleteTreatyId, setDeleteTreatyId] = useState<string | null>(null);
+
+  const actor = user?.fullName || user?.username || 'System';
 
   const startEdit = (treatyCode: string) => {
     const t = treaties.find(x => x.code === treatyCode);
@@ -35,8 +39,15 @@ const Reinsurance = () => {
 
   const cancelEdit = () => setEditingTreatyId(null);
 
+  // Returns true if [aFrom,aTo] overlaps [bFrom,bTo]
+  const datesOverlap = (aFrom: string, aTo: string, bFrom: string, bTo: string) =>
+    aFrom <= bTo && bFrom <= aTo;
+
   const saveEdit = () => {
     if (!editingTreatyId) return;
+    const original = treaties.find(t => t.id === editingTreatyId);
+    if (!original) return;
+
     if (editForm.treatyCapacity < 0 || !editForm.effectiveFrom || !editForm.effectiveTo) {
       toast({ title: 'Invalid input', description: 'Capacity must be ≥ 0 and dates required.', variant: 'destructive' });
       return;
@@ -45,11 +56,84 @@ const Reinsurance = () => {
       toast({ title: 'Invalid dates', description: 'Effective To must be after Effective From.', variant: 'destructive' });
       return;
     }
+
+    // Overlap check: same treaty code, different id
+    const conflict = treaties.find(t =>
+      t.code === original.code &&
+      t.id !== original.id &&
+      datesOverlap(editForm.effectiveFrom, editForm.effectiveTo, t.effectiveFrom, t.effectiveTo),
+    );
+    if (conflict) {
+      toast({
+        title: 'Date range overlaps',
+        description: `Overlaps existing period ${conflict.effectiveFrom} → ${conflict.effectiveTo} for treaty ${conflict.code}.`,
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const changes: { field: string; from: string | number; to: string | number }[] = [];
+    if (original.treatyCapacity !== editForm.treatyCapacity) {
+      changes.push({ field: 'treatyCapacity', from: original.treatyCapacity, to: editForm.treatyCapacity });
+    }
+    if (original.effectiveFrom !== editForm.effectiveFrom) {
+      changes.push({ field: 'effectiveFrom', from: original.effectiveFrom, to: editForm.effectiveFrom });
+    }
+    if (original.effectiveTo !== editForm.effectiveTo) {
+      changes.push({ field: 'effectiveTo', from: original.effectiveTo, to: editForm.effectiveTo });
+    }
+
     setTreaties(prev => prev.map(t => t.id === editingTreatyId
       ? { ...t, treatyCapacity: editForm.treatyCapacity, effectiveFrom: editForm.effectiveFrom, effectiveTo: editForm.effectiveTo }
       : t));
+
+    if (changes.length > 0) {
+      addTreatyAudit({
+        treatyId: original.id,
+        treatyCode: original.code,
+        treatyName: original.name,
+        action: 'Update',
+        changedBy: actor,
+        changes,
+      });
+    }
+
     toast({ title: 'Treaty updated', description: 'Capacity and effective dates saved.' });
     setEditingTreatyId(null);
+  };
+
+  const confirmDelete = () => {
+    if (!deleteTreatyId) return;
+    const t = treaties.find(x => x.id === deleteTreatyId);
+    if (!t) return;
+
+    const activeCessions = data.filter(c => c.treatyName === t.name && c.status === 'Active');
+    if (activeCessions.length > 0) {
+      toast({
+        title: 'Cannot delete treaty',
+        description: `${activeCessions.length} active cession(s) reference ${t.name}. Void or reassign them first.`,
+        variant: 'destructive',
+      });
+      setDeleteTreatyId(null);
+      return;
+    }
+
+    setTreaties(prev => prev.filter(x => x.id !== deleteTreatyId));
+    addTreatyAudit({
+      treatyId: t.id,
+      treatyCode: t.code,
+      treatyName: t.name,
+      action: 'Delete',
+      changedBy: actor,
+      changes: [
+        { field: 'treatyCapacity', from: t.treatyCapacity, to: '—' },
+        { field: 'effectiveFrom', from: t.effectiveFrom, to: '—' },
+        { field: 'effectiveTo', from: t.effectiveTo, to: '—' },
+      ],
+    });
+    if (editingTreatyId === t.id) setEditingTreatyId(null);
+    toast({ title: 'Treaty deleted', description: `${t.code} — ${t.name} removed.` });
+    setDeleteTreatyId(null);
   };
 
   const policyClientMap = useMemo(
