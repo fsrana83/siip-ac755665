@@ -173,6 +173,7 @@ export const ConfigProvider = ({ children }: { children: ReactNode }) => {
       reinsurers, setReinsurers,
       treaties, setTreaties,
       participants, setParticipants,
+      treatyAuditLog, addTreatyAudit,
     }}>
       {children}
     </ConfigContext.Provider>
