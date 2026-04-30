@@ -31,6 +31,12 @@ const Reinsurance = () => {
   const [editingTreatyId, setEditingTreatyId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<{ treatyCapacity: number; effectiveFrom: string; effectiveTo: string }>({ treatyCapacity: 0, effectiveFrom: '', effectiveTo: '' });
   const [deleteTreatyId, setDeleteTreatyId] = useState<string | null>(null);
+  // Audit log filters
+  const [auditSearch, setAuditSearch] = useState('');
+  const [auditTreatyCode, setAuditTreatyCode] = useState<string>('all');
+  const [auditAction, setAuditAction] = useState<'all' | 'Update' | 'Delete'>('all');
+  const [auditDateFrom, setAuditDateFrom] = useState('');
+  const [auditDateTo, setAuditDateTo] = useState('');
 
   const actor = user?.fullName || user?.username || 'System';
 
