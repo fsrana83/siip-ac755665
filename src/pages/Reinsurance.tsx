@@ -517,11 +517,33 @@ const Reinsurance = () => {
                         <button onClick={() => startEdit(c.treatyCode)} className="p-1.5 rounded hover:bg-primary/10 text-primary" title="Edit">
                           <Pencil className="w-4 h-4" />
                         </button>
-                        {treaty && (
-                          <button onClick={() => setDeleteTreatyId(treaty.id)} className="p-1.5 rounded hover:bg-destructive/10 text-destructive" title="Delete">
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        )}
+                        {treaty && (() => {
+                          const activeCount = activeCessionsByTreatyName[treaty.name] || 0;
+                          const blocked = activeCount > 0;
+                          return (
+                            <TooltipProvider delayDuration={150}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span tabIndex={0}>
+                                    <button
+                                      onClick={() => !blocked && setDeleteTreatyId(treaty.id)}
+                                      disabled={blocked}
+                                      aria-disabled={blocked}
+                                      className={`p-1.5 rounded ${blocked ? 'text-muted-foreground/40 cursor-not-allowed' : 'text-destructive hover:bg-destructive/10'}`}
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  {blocked
+                                    ? `Cannot delete — ${activeCount} active cession${activeCount > 1 ? 's' : ''} reference this treaty. Void or reassign first.`
+                                    : 'Delete treaty'}
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          );
+                        })()}
                       </div>
                     )}
                   </td>
