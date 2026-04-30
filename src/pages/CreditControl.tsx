@@ -77,6 +77,45 @@ const CreditControl = () => {
     toast({ title: 'Credit Approved', description: creditProposal.proposalNo });
   };
 
+  // ===== Quotation Receipts (sales-submitted, awaiting credit approval) =====
+  type QuotationReceiptRow = QuotationReceipt & { quotRef: string; quotationId: string; clientName: string; productName: string };
+  const quotationReceiptRows: QuotationReceiptRow[] = quotations.flatMap(q =>
+    (q.receipts || []).map(r => ({ ...r, quotRef: q.quotRef, quotationId: q.id, clientName: q.clientName, productName: q.productName })),
+  );
+  const pendingQuotationReceipts = quotationReceiptRows.filter(r => r.status === 'Pending Approval');
+
+  const updateQuotationReceipt = (
+    quotationId: string,
+    receiptId: string,
+    patch: Partial<QuotationReceipt>,
+  ) => {
+    setQuotations(prev => prev.map(q =>
+      q.id === quotationId
+        ? { ...q, receipts: (q.receipts || []).map(r => r.id === receiptId ? { ...r, ...patch } : r) }
+        : q,
+    ));
+  };
+
+  const approveQuotationReceipt = (row: QuotationReceiptRow) => {
+    updateQuotationReceipt(row.quotationId, row.id, {
+      status: 'Approved',
+      approvedBy: approver,
+      approvedAt: new Date().toISOString(),
+    });
+    toast({ title: 'Receipt approved', description: `${row.receiptNo} — issuance approved.` });
+  };
+
+  const rejectQuotationReceipt = (row: QuotationReceiptRow) => {
+    const reason = window.prompt('Rejection reason (optional):') || '';
+    updateQuotationReceipt(row.quotationId, row.id, {
+      status: 'Rejected',
+      approvedBy: approver,
+      approvedAt: new Date().toISOString(),
+      rejectionReason: reason,
+    });
+    toast({ title: 'Receipt rejected', description: row.receiptNo, variant: 'destructive' });
+  };
+
   // All receipts across all proposals
   const allReceipts = proposals.flatMap(p => p.receipts.map(r => ({ ...r, proposalNo: p.proposalNo, clientName: p.clientName })));
   const allCredits = proposals.flatMap(p => p.credits.map(c => ({ ...c, proposalNo: p.proposalNo, clientName: p.clientName })));
