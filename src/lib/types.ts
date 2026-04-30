@@ -18,6 +18,21 @@ export interface User {
   active: boolean;
 }
 
+export interface QuotationReceipt {
+  id: string;
+  receiptNo: string; // provisional ref until approved
+  receiptDate: string;
+  paymentMode: 'Cash' | 'Cheque' | 'Bank Transfer' | 'Online';
+  amount: number;
+  remarks: string;
+  status: 'Pending Approval' | 'Approved' | 'Rejected';
+  createdBy: string;
+  createdAt: string;
+  approvedBy?: string;
+  approvedAt?: string;
+  rejectionReason?: string;
+}
+
 export interface Quotation {
   id: string;
   quotRef: string;
@@ -29,6 +44,7 @@ export interface Quotation {
   status: 'Draft' | 'Converted' | 'Void';
   createdBy: string;
   createdAt: string;
+  receipts?: QuotationReceipt[];
 }
 
 export interface MedicalQuestion {
