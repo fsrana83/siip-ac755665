@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { mockReinsurance, ReinsuranceCession } from '@/lib/mockData';
-import { Search, Plus, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { Search, Plus, AlertTriangle, ShieldCheck, Pencil, Check, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useConfig } from '@/contexts/ConfigContext';
@@ -19,8 +19,36 @@ const Reinsurance = () => {
   const [open, setOpen] = useState(false);
   const [selectedTreatyCode, setSelectedTreatyCode] = useState('');
   const { toast } = useToast();
-  const { reinsurers, treaties, participants } = useConfig();
+  const { reinsurers, treaties, setTreaties, participants } = useConfig();
   const { policies } = useData();
+  const [editingTreatyId, setEditingTreatyId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<{ treatyCapacity: number; effectiveFrom: string; effectiveTo: string }>({ treatyCapacity: 0, effectiveFrom: '', effectiveTo: '' });
+
+  const startEdit = (treatyCode: string) => {
+    const t = treaties.find(x => x.code === treatyCode);
+    if (!t) return;
+    setEditingTreatyId(t.id);
+    setEditForm({ treatyCapacity: t.treatyCapacity, effectiveFrom: t.effectiveFrom, effectiveTo: t.effectiveTo });
+  };
+
+  const cancelEdit = () => setEditingTreatyId(null);
+
+  const saveEdit = () => {
+    if (!editingTreatyId) return;
+    if (editForm.treatyCapacity < 0 || !editForm.effectiveFrom || !editForm.effectiveTo) {
+      toast({ title: 'Invalid input', description: 'Capacity must be ≥ 0 and dates required.', variant: 'destructive' });
+      return;
+    }
+    if (editForm.effectiveTo < editForm.effectiveFrom) {
+      toast({ title: 'Invalid dates', description: 'Effective To must be after Effective From.', variant: 'destructive' });
+      return;
+    }
+    setTreaties(prev => prev.map(t => t.id === editingTreatyId
+      ? { ...t, treatyCapacity: editForm.treatyCapacity, effectiveFrom: editForm.effectiveFrom, effectiveTo: editForm.effectiveTo }
+      : t));
+    toast({ title: 'Treaty updated', description: 'Capacity and effective dates saved.' });
+    setEditingTreatyId(null);
+  };
 
   const policyClientMap = useMemo(
     () => Object.fromEntries(policies.map(p => [p.policyNo, p.policyHolder || p.clientName])),
@@ -233,19 +261,56 @@ const Reinsurance = () => {
                 <th className="text-left px-4 py-3">Type</th>
                 <th className="text-right px-4 py-3">Capacity (OMR)</th>
                 <th className="text-right px-4 py-3">Used (OMR)</th>
-                <th className="text-left px-4 py-3 w-1/3">Utilization</th>
+                <th className="text-left px-4 py-3">Effective From</th>
+                <th className="text-left px-4 py-3">Effective To</th>
+                <th className="text-left px-4 py-3 w-1/4">Utilization</th>
+                <th className="text-right px-4 py-3">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {capacityStatuses.map(c => (
+              {capacityStatuses.map(c => {
+                const treaty = treaties.find(t => t.code === c.treatyCode);
+                const isEditing = treaty && editingTreatyId === treaty.id;
+                return (
                 <tr key={c.treatyCode} className={`border-b border-border/30 ${c.exceeded ? 'bg-destructive/5' : ''}`}>
                   <td className="px-4 py-3 text-sm font-medium text-foreground">
                     {c.treatyCode} <span className="text-muted-foreground">— {c.treatyName}</span>
                   </td>
                   <td className="px-4 py-3 text-sm text-muted-foreground">{c.treatyType}</td>
-                  <td className="px-4 py-3 text-sm text-foreground text-right">{c.capacity.toLocaleString()}</td>
+                  <td className="px-4 py-3 text-sm text-foreground text-right">
+                    {isEditing ? (
+                      <input
+                        type="number"
+                        min="0"
+                        step="1000"
+                        value={editForm.treatyCapacity}
+                        onChange={(e) => setEditForm(f => ({ ...f, treatyCapacity: Number(e.target.value) }))}
+                        className="w-32 px-2 py-1 bg-muted/50 border border-border rounded text-sm text-right"
+                      />
+                    ) : c.capacity.toLocaleString()}
+                  </td>
                   <td className={`px-4 py-3 text-sm text-right font-medium ${c.exceeded ? 'text-destructive' : 'text-foreground'}`}>
                     {c.used.toLocaleString()}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground">
+                    {isEditing ? (
+                      <input
+                        type="date"
+                        value={editForm.effectiveFrom}
+                        onChange={(e) => setEditForm(f => ({ ...f, effectiveFrom: e.target.value }))}
+                        className="px-2 py-1 bg-muted/50 border border-border rounded text-sm"
+                      />
+                    ) : treaty?.effectiveFrom}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground">
+                    {isEditing ? (
+                      <input
+                        type="date"
+                        value={editForm.effectiveTo}
+                        onChange={(e) => setEditForm(f => ({ ...f, effectiveTo: e.target.value }))}
+                        className="px-2 py-1 bg-muted/50 border border-border rounded text-sm"
+                      />
+                    ) : treaty?.effectiveTo}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
@@ -260,8 +325,24 @@ const Reinsurance = () => {
                       </span>
                     </div>
                   </td>
+                  <td className="px-4 py-3 text-right">
+                    {isEditing ? (
+                      <div className="flex items-center justify-end gap-1">
+                        <button onClick={saveEdit} className="p-1.5 rounded hover:bg-success/10 text-success" title="Save">
+                          <Check className="w-4 h-4" />
+                        </button>
+                        <button onClick={cancelEdit} className="p-1.5 rounded hover:bg-destructive/10 text-destructive" title="Cancel">
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <button onClick={() => startEdit(c.treatyCode)} className="p-1.5 rounded hover:bg-primary/10 text-primary" title="Edit">
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                    )}
+                  </td>
                 </tr>
-              ))}
+              );})}
             </tbody>
           </table>
         </div>
