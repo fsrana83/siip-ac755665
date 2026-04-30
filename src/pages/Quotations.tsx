@@ -105,6 +105,45 @@ const Quotations = () => {
     toast({ title: 'Quotation voided', description: q.quotRef });
   };
 
+  const openReceiptDialog = (q: Quotation) => {
+    setReceiptQuotation(q);
+    setNewReceipt({
+      receiptDate: new Date().toISOString().split('T')[0],
+      paymentMode: 'Cash',
+      amount: q.totalPremium,
+      remarks: '',
+    });
+    setReceiptOpen(true);
+  };
+
+  const handleAddReceipt = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!receiptQuotation) return;
+    if (newReceipt.amount <= 0) {
+      toast({ title: 'Invalid amount', description: 'Receipt amount must be greater than zero.', variant: 'destructive' });
+      return;
+    }
+    const existing = receiptQuotation.receipts || [];
+    const seq = existing.length + 1;
+    const receipt: QuotationReceipt = {
+      id: `${receiptQuotation.id}-R${seq}`,
+      receiptNo: `QR-${receiptQuotation.quotRef}-${String(seq).padStart(2, '0')}`,
+      receiptDate: newReceipt.receiptDate,
+      paymentMode: newReceipt.paymentMode,
+      amount: newReceipt.amount,
+      remarks: newReceipt.remarks,
+      status: 'Pending Approval',
+      createdBy: actor,
+      createdAt: new Date().toISOString(),
+    };
+    setQuotations(prev => prev.map(x =>
+      x.id === receiptQuotation.id ? { ...x, receipts: [...existing, receipt] } : x,
+    ));
+    toast({ title: 'Receipt submitted', description: `${receipt.receiptNo} — pending credit approval.` });
+    setReceiptOpen(false);
+    setReceiptQuotation(null);
+  };
+
   const openConvertDialog = (q: Quotation) => {
     setConvertQuotation(q);
     setMedicalQuestions(DEFAULT_MEDICAL_QUESTIONS.map(mq => ({ ...mq })));
