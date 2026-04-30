@@ -603,6 +603,90 @@ const Quotations = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Add Receipt Dialog (Sales) */}
+      <Dialog open={receiptOpen} onOpenChange={(o) => { setReceiptOpen(o); if (!o) setReceiptQuotation(null); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Receipt className="w-5 h-5 text-primary" /> Add Receipt — {receiptQuotation?.quotRef}
+            </DialogTitle>
+          </DialogHeader>
+          {receiptQuotation && (
+            <form onSubmit={handleAddReceipt} className="space-y-4">
+              <div className="p-3 bg-muted/30 border border-border rounded-lg text-xs space-y-1">
+                <p><span className="text-muted-foreground">Client:</span> <span className="text-foreground font-medium">{receiptQuotation.clientName}</span></p>
+                <p><span className="text-muted-foreground">Annual Premium:</span> <span className="text-foreground font-semibold">OMR {receiptQuotation.totalPremium.toFixed(3)}</span></p>
+                <p className="text-amber-600">Receipts will require Credit Controller approval before issuance.</p>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-muted-foreground mb-1">Receipt Date</label>
+                  <input type="date" required value={newReceipt.receiptDate}
+                    onChange={e => setNewReceipt(prev => ({ ...prev, receiptDate: e.target.value }))}
+                    className="w-full px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs text-muted-foreground mb-1">Payment Mode</label>
+                  <select value={newReceipt.paymentMode}
+                    onChange={e => setNewReceipt(prev => ({ ...prev, paymentMode: e.target.value as typeof prev.paymentMode }))}
+                    className="w-full px-3 py-2.5 bg-muted/50 border border-border rounded-lg text-sm">
+                    <option value="Cash">Cash</option>
+                    <option value="Cheque">Cheque</option>
+                    <option value="Bank Transfer">Bank Transfer</option>
+                    <option value="Online">Online</option>
+                  </select>
+                </div>
+                <div className="col-span-2">
+                  <label className="block text-xs text-muted-foreground mb-1">Amount (OMR)</label>
+                  <input type="number" min="0" step="0.001" required value={newReceipt.amount}
+                    onChange={e => setNewReceipt(prev => ({ ...prev, amount: Number(e.target.value) }))}
+                    className="w-full px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm" />
+                </div>
+                <div className="col-span-2">
+                  <label className="block text-xs text-muted-foreground mb-1">Remarks</label>
+                  <input type="text" placeholder="Cheque #, bank ref, notes…" value={newReceipt.remarks}
+                    onChange={e => setNewReceipt(prev => ({ ...prev, remarks: e.target.value }))}
+                    className="w-full px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm" />
+                </div>
+              </div>
+              {(receiptQuotation.receipts || []).length > 0 && (
+                <div className="border border-border rounded-lg max-h-40 overflow-y-auto">
+                  <table className="w-full text-xs">
+                    <thead className="bg-muted/30">
+                      <tr>
+                        <th className="text-left px-3 py-2">Receipt #</th>
+                        <th className="text-left px-3 py-2">Mode</th>
+                        <th className="text-right px-3 py-2">Amount</th>
+                        <th className="text-left px-3 py-2">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(receiptQuotation.receipts || []).map(r => (
+                        <tr key={r.id} className="border-t border-border/40">
+                          <td className="px-3 py-2 text-foreground">{r.receiptNo}</td>
+                          <td className="px-3 py-2 text-muted-foreground">{r.paymentMode}</td>
+                          <td className="px-3 py-2 text-right text-foreground">{r.amount.toFixed(3)}</td>
+                          <td className="px-3 py-2">
+                            <span className={`px-1.5 py-0.5 rounded ${
+                              r.status === 'Approved' ? 'bg-emerald-500/15 text-emerald-600' :
+                              r.status === 'Rejected' ? 'bg-destructive/10 text-destructive' :
+                              'bg-amber-500/15 text-amber-600'
+                            }`}>{r.status}</span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              <button type="submit" className="w-full py-2.5 bg-primary text-primary-foreground rounded-lg font-medium text-sm hover:bg-primary/90">
+                Submit Receipt for Credit Approval
+              </button>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
