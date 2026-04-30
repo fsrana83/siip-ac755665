@@ -1,9 +1,11 @@
 import { useState, useMemo } from 'react';
 import { mockReinsurance, ReinsuranceCession } from '@/lib/mockData';
-import { Search, Plus, AlertTriangle, ShieldCheck, Pencil, Check, X } from 'lucide-react';
+import { Search, Plus, AlertTriangle, ShieldCheck, Pencil, Check, X, Trash2, History } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useConfig } from '@/contexts/ConfigContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
 import { computeCapacityStatuses } from '@/lib/capacityUtils';
 
