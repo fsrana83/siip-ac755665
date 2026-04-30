@@ -261,19 +261,56 @@ const Reinsurance = () => {
                 <th className="text-left px-4 py-3">Type</th>
                 <th className="text-right px-4 py-3">Capacity (OMR)</th>
                 <th className="text-right px-4 py-3">Used (OMR)</th>
-                <th className="text-left px-4 py-3 w-1/3">Utilization</th>
+                <th className="text-left px-4 py-3">Effective From</th>
+                <th className="text-left px-4 py-3">Effective To</th>
+                <th className="text-left px-4 py-3 w-1/4">Utilization</th>
+                <th className="text-right px-4 py-3">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {capacityStatuses.map(c => (
+              {capacityStatuses.map(c => {
+                const treaty = treaties.find(t => t.code === c.treatyCode);
+                const isEditing = treaty && editingTreatyId === treaty.id;
+                return (
                 <tr key={c.treatyCode} className={`border-b border-border/30 ${c.exceeded ? 'bg-destructive/5' : ''}`}>
                   <td className="px-4 py-3 text-sm font-medium text-foreground">
                     {c.treatyCode} <span className="text-muted-foreground">— {c.treatyName}</span>
                   </td>
                   <td className="px-4 py-3 text-sm text-muted-foreground">{c.treatyType}</td>
-                  <td className="px-4 py-3 text-sm text-foreground text-right">{c.capacity.toLocaleString()}</td>
+                  <td className="px-4 py-3 text-sm text-foreground text-right">
+                    {isEditing ? (
+                      <input
+                        type="number"
+                        min="0"
+                        step="1000"
+                        value={editForm.treatyCapacity}
+                        onChange={(e) => setEditForm(f => ({ ...f, treatyCapacity: Number(e.target.value) }))}
+                        className="w-32 px-2 py-1 bg-muted/50 border border-border rounded text-sm text-right"
+                      />
+                    ) : c.capacity.toLocaleString()}
+                  </td>
                   <td className={`px-4 py-3 text-sm text-right font-medium ${c.exceeded ? 'text-destructive' : 'text-foreground'}`}>
                     {c.used.toLocaleString()}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground">
+                    {isEditing ? (
+                      <input
+                        type="date"
+                        value={editForm.effectiveFrom}
+                        onChange={(e) => setEditForm(f => ({ ...f, effectiveFrom: e.target.value }))}
+                        className="px-2 py-1 bg-muted/50 border border-border rounded text-sm"
+                      />
+                    ) : treaty?.effectiveFrom}
+                  </td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground">
+                    {isEditing ? (
+                      <input
+                        type="date"
+                        value={editForm.effectiveTo}
+                        onChange={(e) => setEditForm(f => ({ ...f, effectiveTo: e.target.value }))}
+                        className="px-2 py-1 bg-muted/50 border border-border rounded text-sm"
+                      />
+                    ) : treaty?.effectiveTo}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
@@ -288,8 +325,24 @@ const Reinsurance = () => {
                       </span>
                     </div>
                   </td>
+                  <td className="px-4 py-3 text-right">
+                    {isEditing ? (
+                      <div className="flex items-center justify-end gap-1">
+                        <button onClick={saveEdit} className="p-1.5 rounded hover:bg-success/10 text-success" title="Save">
+                          <Check className="w-4 h-4" />
+                        </button>
+                        <button onClick={cancelEdit} className="p-1.5 rounded hover:bg-destructive/10 text-destructive" title="Cancel">
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <button onClick={() => startEdit(c.treatyCode)} className="p-1.5 rounded hover:bg-primary/10 text-primary" title="Edit">
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                    )}
+                  </td>
                 </tr>
-              ))}
+              );})}
             </tbody>
           </table>
         </div>
