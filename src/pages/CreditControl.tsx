@@ -1,14 +1,17 @@
 import { useState } from 'react';
-import { Search, Receipt, CreditCard, Plus, FileDown, FileSpreadsheet, FileType, AlertTriangle } from 'lucide-react';
+import { Search, Receipt, CreditCard, Plus, FileDown, FileSpreadsheet, FileType, AlertTriangle, Check, X } from 'lucide-react';
 import { useData } from '@/contexts/DataContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Proposal, ReceiptEntry, CreditEntry } from '@/lib/types';
+import { Proposal, ReceiptEntry, CreditEntry, QuotationReceipt } from '@/lib/types';
 import { exportCreditReport } from '@/lib/creditExportUtils';
 
 const CreditControl = () => {
-  const { proposals, setProposals } = useData();
+  const { proposals, setProposals, quotations, setQuotations } = useData();
+  const { user } = useAuth();
+  const approver = user?.fullName || user?.username || 'credit';
   const { toast } = useToast();
   const [search, setSearch] = useState('');
 
