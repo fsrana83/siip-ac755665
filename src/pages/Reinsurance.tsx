@@ -19,8 +19,36 @@ const Reinsurance = () => {
   const [open, setOpen] = useState(false);
   const [selectedTreatyCode, setSelectedTreatyCode] = useState('');
   const { toast } = useToast();
-  const { reinsurers, treaties, participants } = useConfig();
+  const { reinsurers, treaties, setTreaties, participants } = useConfig();
   const { policies } = useData();
+  const [editingTreatyId, setEditingTreatyId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<{ treatyCapacity: number; effectiveFrom: string; effectiveTo: string }>({ treatyCapacity: 0, effectiveFrom: '', effectiveTo: '' });
+
+  const startEdit = (treatyCode: string) => {
+    const t = treaties.find(x => x.code === treatyCode);
+    if (!t) return;
+    setEditingTreatyId(t.id);
+    setEditForm({ treatyCapacity: t.treatyCapacity, effectiveFrom: t.effectiveFrom, effectiveTo: t.effectiveTo });
+  };
+
+  const cancelEdit = () => setEditingTreatyId(null);
+
+  const saveEdit = () => {
+    if (!editingTreatyId) return;
+    if (editForm.treatyCapacity < 0 || !editForm.effectiveFrom || !editForm.effectiveTo) {
+      toast({ title: 'Invalid input', description: 'Capacity must be ≥ 0 and dates required.', variant: 'destructive' });
+      return;
+    }
+    if (editForm.effectiveTo < editForm.effectiveFrom) {
+      toast({ title: 'Invalid dates', description: 'Effective To must be after Effective From.', variant: 'destructive' });
+      return;
+    }
+    setTreaties(prev => prev.map(t => t.id === editingTreatyId
+      ? { ...t, treatyCapacity: editForm.treatyCapacity, effectiveFrom: editForm.effectiveFrom, effectiveTo: editForm.effectiveTo }
+      : t));
+    toast({ title: 'Treaty updated', description: 'Capacity and effective dates saved.' });
+    setEditingTreatyId(null);
+  };
 
   const policyClientMap = useMemo(
     () => Object.fromEntries(policies.map(p => [p.policyNo, p.policyHolder || p.clientName])),
