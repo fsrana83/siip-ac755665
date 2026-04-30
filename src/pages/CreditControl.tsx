@@ -1,14 +1,17 @@
 import { useState } from 'react';
-import { Search, Receipt, CreditCard, Plus, FileDown, FileSpreadsheet, FileType, AlertTriangle } from 'lucide-react';
+import { Search, Receipt, CreditCard, Plus, FileDown, FileSpreadsheet, FileType, AlertTriangle, Check, X } from 'lucide-react';
 import { useData } from '@/contexts/DataContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Proposal, ReceiptEntry, CreditEntry } from '@/lib/types';
+import { Proposal, ReceiptEntry, CreditEntry, QuotationReceipt } from '@/lib/types';
 import { exportCreditReport } from '@/lib/creditExportUtils';
 
 const CreditControl = () => {
-  const { proposals, setProposals } = useData();
+  const { proposals, setProposals, quotations, setQuotations } = useData();
+  const { user } = useAuth();
+  const approver = user?.fullName || user?.username || 'credit';
   const { toast } = useToast();
   const [search, setSearch] = useState('');
 
@@ -74,6 +77,45 @@ const CreditControl = () => {
     toast({ title: 'Credit Approved', description: creditProposal.proposalNo });
   };
 
+  // ===== Quotation Receipts (sales-submitted, awaiting credit approval) =====
+  type QuotationReceiptRow = QuotationReceipt & { quotRef: string; quotationId: string; clientName: string; productName: string };
+  const quotationReceiptRows: QuotationReceiptRow[] = quotations.flatMap(q =>
+    (q.receipts || []).map(r => ({ ...r, quotRef: q.quotRef, quotationId: q.id, clientName: q.clientName, productName: q.productName })),
+  );
+  const pendingQuotationReceipts = quotationReceiptRows.filter(r => r.status === 'Pending Approval');
+
+  const updateQuotationReceipt = (
+    quotationId: string,
+    receiptId: string,
+    patch: Partial<QuotationReceipt>,
+  ) => {
+    setQuotations(prev => prev.map(q =>
+      q.id === quotationId
+        ? { ...q, receipts: (q.receipts || []).map(r => r.id === receiptId ? { ...r, ...patch } : r) }
+        : q,
+    ));
+  };
+
+  const approveQuotationReceipt = (row: QuotationReceiptRow) => {
+    updateQuotationReceipt(row.quotationId, row.id, {
+      status: 'Approved',
+      approvedBy: approver,
+      approvedAt: new Date().toISOString(),
+    });
+    toast({ title: 'Receipt approved', description: `${row.receiptNo} — issuance approved.` });
+  };
+
+  const rejectQuotationReceipt = (row: QuotationReceiptRow) => {
+    const reason = window.prompt('Rejection reason (optional):') || '';
+    updateQuotationReceipt(row.quotationId, row.id, {
+      status: 'Rejected',
+      approvedBy: approver,
+      approvedAt: new Date().toISOString(),
+      rejectionReason: reason,
+    });
+    toast({ title: 'Receipt rejected', description: row.receiptNo, variant: 'destructive' });
+  };
+
   // All receipts across all proposals
   const allReceipts = proposals.flatMap(p => p.receipts.map(r => ({ ...r, proposalNo: p.proposalNo, clientName: p.clientName })));
   const allCredits = proposals.flatMap(p => p.credits.map(c => ({ ...c, proposalNo: p.proposalNo, clientName: p.clientName })));
@@ -112,12 +154,95 @@ const CreditControl = () => {
         <p className="text-sm text-muted-foreground mt-1">Manage receipts, credit entries, aging reports</p>
       </div>
 
-      <Tabs defaultValue="proposals" className="space-y-4">
+      <Tabs defaultValue="quotation-receipts" className="space-y-4">
         <TabsList>
+          <TabsTrigger value="quotation-receipts">
+            Quotation Receipts
+            {pendingQuotationReceipts.length > 0 && (
+              <span className="ml-2 px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-600 text-[10px] font-semibold">
+                {pendingQuotationReceipts.length}
+              </span>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="proposals">Pending Proposals</TabsTrigger>
           <TabsTrigger value="receipts">Receipts Register</TabsTrigger>
           <TabsTrigger value="aging">Aging Report</TabsTrigger>
         </TabsList>
+
+        {/* Quotation Receipts Tab */}
+        <TabsContent value="quotation-receipts">
+          <div className="glass-card">
+            <div className="p-4 border-b border-border/50 flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">Quotation Receipts — Approval Queue</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">Sales-submitted receipts at quotation stage. Approve to authorize issuance; approved receipts are carried into the proposal on conversion.</p>
+              </div>
+              <span className="text-xs text-muted-foreground">{pendingQuotationReceipts.length} pending</span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="table-header">
+                    <th className="text-left px-4 py-3">Receipt No</th>
+                    <th className="text-left px-4 py-3">Quotation</th>
+                    <th className="text-left px-4 py-3">Client</th>
+                    <th className="text-left px-4 py-3">Date</th>
+                    <th className="text-left px-4 py-3">Mode</th>
+                    <th className="text-right px-4 py-3">Amount</th>
+                    <th className="text-left px-4 py-3">Submitted By</th>
+                    <th className="text-left px-4 py-3">Status</th>
+                    <th className="text-center px-4 py-3">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {quotationReceiptRows.length === 0 ? (
+                    <tr><td colSpan={9} className="px-4 py-8 text-center text-sm text-muted-foreground">No quotation-level receipts submitted</td></tr>
+                  ) : quotationReceiptRows.map(r => (
+                    <tr key={r.id} className="border-b border-border/30 hover:bg-muted/30 transition-colors">
+                      <td className="px-4 py-3 text-sm font-medium text-primary">{r.receiptNo}</td>
+                      <td className="px-4 py-3 text-sm text-foreground">{r.quotRef}</td>
+                      <td className="px-4 py-3 text-sm text-foreground">{r.clientName}</td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground">{r.receiptDate}</td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground">{r.paymentMode}</td>
+                      <td className="px-4 py-3 text-sm text-emerald-600 text-right font-medium">OMR {r.amount.toFixed(3)}</td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground">{r.createdBy}</td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
+                          r.status === 'Approved' ? 'bg-emerald-500/15 text-emerald-600 border border-emerald-500/30' :
+                          r.status === 'Rejected' ? 'bg-destructive/10 text-destructive border border-destructive/20' :
+                          'bg-amber-500/15 text-amber-600 border border-amber-500/30'
+                        }`}>{r.status}</span>
+                        {r.status !== 'Pending Approval' && r.approvedBy && (
+                          <p className="text-[10px] text-muted-foreground mt-0.5">by {r.approvedBy}</p>
+                        )}
+                        {r.rejectionReason && (
+                          <p className="text-[10px] text-destructive mt-0.5">{r.rejectionReason}</p>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        {r.status === 'Pending Approval' ? (
+                          <div className="flex items-center justify-center gap-1">
+                            <button onClick={() => approveQuotationReceipt(r)} title="Approve"
+                              className="p-1.5 rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600">
+                              <Check className="w-4 h-4" />
+                            </button>
+                            <button onClick={() => rejectQuotationReceipt(r)} title="Reject"
+                              className="p-1.5 rounded bg-destructive/10 hover:bg-destructive/20 text-destructive">
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </TabsContent>
+
 
         {/* Pending Proposals Tab */}
         <TabsContent value="proposals">

@@ -1,11 +1,12 @@
 import { useState, useMemo } from 'react';
-import { Quotation, Client, MedicalQuestion, PremiumFrequency, FREQUENCY_DIVISORS } from '@/lib/types';
-import { Plus, Search, UserPlus, Calculator, Ban, ArrowRight, MoreHorizontal, FileText } from 'lucide-react';
+import { Quotation, Client, MedicalQuestion, PremiumFrequency, FREQUENCY_DIVISORS, QuotationReceipt } from '@/lib/types';
+import { Plus, Search, UserPlus, Calculator, Ban, ArrowRight, MoreHorizontal, FileText, Receipt } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
 import { useData } from '@/contexts/DataContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { PRODUCTS, calculatePremium, calculateAge, PremiumBreakdown } from '@/lib/premiumEngine';
 import { DEFAULT_MEDICAL_QUESTIONS } from '@/lib/medicalQuestions';
 import { useConfig } from '@/contexts/ConfigContext';
@@ -20,6 +21,9 @@ const Quotations = () => {
   const [search, setSearch] = useState('');
   const { quotations, setQuotations, clients, setClients, proposals, setProposals, medicalExams, setMedicalExams } = useData();
   const { products: configProducts } = useConfig();
+  const { user } = useAuth();
+  const actor = user?.fullName || user?.username || 'sales';
+  const canAddReceipt = user?.role === 'admin' || user?.role === 'sales';
   const activeProducts = configProducts.filter(p => p.active);
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
@@ -41,6 +45,17 @@ const Quotations = () => {
   const [convertQuotation, setConvertQuotation] = useState<Quotation | null>(null);
   const [medicalQuestions, setMedicalQuestions] = useState<MedicalQuestion[]>([]);
   const [medicalStep, setMedicalStep] = useState(0); // 0 = intro, 1 = filling
+
+  // Receipt dialog state
+  const [receiptOpen, setReceiptOpen] = useState(false);
+  const [receiptQuotation, setReceiptQuotation] = useState<Quotation | null>(null);
+  const [newReceipt, setNewReceipt] = useState<{ receiptDate: string; paymentMode: 'Cash' | 'Cheque' | 'Bank Transfer' | 'Online'; amount: number; remarks: string }>({
+    receiptDate: new Date().toISOString().split('T')[0],
+    paymentMode: 'Cash',
+    amount: 0,
+    remarks: '',
+  });
+
 
   const selectedClient = clients.find(c => c.clientId === selectedClientId);
   const selectedProduct = activeProducts.find(p => p.id === selectedProductId);
@@ -90,6 +105,45 @@ const Quotations = () => {
     toast({ title: 'Quotation voided', description: q.quotRef });
   };
 
+  const openReceiptDialog = (q: Quotation) => {
+    setReceiptQuotation(q);
+    setNewReceipt({
+      receiptDate: new Date().toISOString().split('T')[0],
+      paymentMode: 'Cash',
+      amount: q.totalPremium,
+      remarks: '',
+    });
+    setReceiptOpen(true);
+  };
+
+  const handleAddReceipt = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!receiptQuotation) return;
+    if (newReceipt.amount <= 0) {
+      toast({ title: 'Invalid amount', description: 'Receipt amount must be greater than zero.', variant: 'destructive' });
+      return;
+    }
+    const existing = receiptQuotation.receipts || [];
+    const seq = existing.length + 1;
+    const receipt: QuotationReceipt = {
+      id: `${receiptQuotation.id}-R${seq}`,
+      receiptNo: `QR-${receiptQuotation.quotRef}-${String(seq).padStart(2, '0')}`,
+      receiptDate: newReceipt.receiptDate,
+      paymentMode: newReceipt.paymentMode,
+      amount: newReceipt.amount,
+      remarks: newReceipt.remarks,
+      status: 'Pending Approval',
+      createdBy: actor,
+      createdAt: new Date().toISOString(),
+    };
+    setQuotations(prev => prev.map(x =>
+      x.id === receiptQuotation.id ? { ...x, receipts: [...existing, receipt] } : x,
+    ));
+    toast({ title: 'Receipt submitted', description: `${receipt.receiptNo} — pending credit approval.` });
+    setReceiptOpen(false);
+    setReceiptQuotation(null);
+  };
+
   const openConvertDialog = (q: Quotation) => {
     setConvertQuotation(q);
     setMedicalQuestions(DEFAULT_MEDICAL_QUESTIONS.map(mq => ({ ...mq })));
@@ -102,13 +156,24 @@ const Quotations = () => {
   const handleConvertToProposal = () => {
     if (!convertQuotation || !allMedicalAnswered) return;
     const proposalNo = `PP-2026-${String(proposals.length + 1).padStart(4, '0')}`;
+    // Carry approved quotation receipts into the proposal
+    const approvedReceipts = (convertQuotation.receipts || [])
+      .filter(r => r.status === 'Approved')
+      .map(r => ({
+        id: r.id,
+        receiptNo: r.receiptNo,
+        receiptDate: r.receiptDate,
+        paymentMode: r.paymentMode,
+        amount: r.amount,
+        remarks: r.remarks ? `${r.remarks} (from quotation)` : 'Carried from quotation',
+      }));
     setProposals(prev => [...prev, {
       id: String(proposals.length + 1), proposalNo, quotRef: convertQuotation.quotRef,
       clientName: convertQuotation.clientName, uwDecision: 'Pending', status: 'Pending UW' as const,
       premiumFrequency: convertQuotation.premiumFrequency,
       createdAt: new Date().toISOString().split('T')[0],
       medicalQuestions: [...medicalQuestions],
-      receipts: [], credits: [],
+      receipts: approvedReceipts, credits: [],
       totalPremiumDue: convertQuotation.totalPremium,
     }]);
     setQuotations(prev => prev.map(x => x.id === convertQuotation.id ? { ...x, status: 'Converted' as const } : x));
@@ -392,11 +457,17 @@ const Quotations = () => {
                 <th className="text-left px-4 py-3">Frequency</th>
                 <th className="text-left px-4 py-3">Status</th>
                 <th className="text-left px-4 py-3">Date</th>
+                <th className="text-left px-4 py-3">Receipts</th>
                 <th className="text-center px-4 py-3">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map(q => (
+              {filtered.map(q => {
+                const receipts = q.receipts || [];
+                const pending = receipts.filter(r => r.status === 'Pending Approval').length;
+                const approved = receipts.filter(r => r.status === 'Approved').length;
+                const rejected = receipts.filter(r => r.status === 'Rejected').length;
+                return (
                 <tr key={q.id} className="border-b border-border/30 hover:bg-muted/30 transition-colors">
                   <td className="px-4 py-3 text-sm font-medium text-primary">{q.quotRef}</td>
                   <td className="px-4 py-3 text-sm text-foreground">{q.clientName}</td>
@@ -408,6 +479,17 @@ const Quotations = () => {
                     <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statusStyles[q.status]}`}>{q.status}</span>
                   </td>
                   <td className="px-4 py-3 text-sm text-muted-foreground">{q.createdAt}</td>
+                  <td className="px-4 py-3 text-xs">
+                    {receipts.length === 0 ? (
+                      <span className="text-muted-foreground/60">—</span>
+                    ) : (
+                      <div className="flex items-center gap-1 flex-wrap">
+                        {pending > 0 && <span className="px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-600 border border-amber-500/30">{pending} pending</span>}
+                        {approved > 0 && <span className="px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-600 border border-emerald-500/30">{approved} approved</span>}
+                        {rejected > 0 && <span className="px-1.5 py-0.5 rounded bg-destructive/10 text-destructive border border-destructive/20">{rejected} rejected</span>}
+                      </div>
+                    )}
+                  </td>
                   <td className="px-4 py-3 text-center">
                     {q.status === 'Draft' && (
                       <DropdownMenu>
@@ -417,6 +499,11 @@ const Quotations = () => {
                           </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          {canAddReceipt && (
+                            <DropdownMenuItem onClick={() => openReceiptDialog(q)} className="gap-2">
+                              <Receipt className="w-4 h-4" /> Add Receipt (optional)
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuItem onClick={() => openConvertDialog(q)} className="gap-2">
                             <ArrowRight className="w-4 h-4" /> Convert to Proposal
                           </DropdownMenuItem>
@@ -428,7 +515,8 @@ const Quotations = () => {
                     )}
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -512,6 +600,90 @@ const Quotations = () => {
                 </>
               )}
             </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Receipt Dialog (Sales) */}
+      <Dialog open={receiptOpen} onOpenChange={(o) => { setReceiptOpen(o); if (!o) setReceiptQuotation(null); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Receipt className="w-5 h-5 text-primary" /> Add Receipt — {receiptQuotation?.quotRef}
+            </DialogTitle>
+          </DialogHeader>
+          {receiptQuotation && (
+            <form onSubmit={handleAddReceipt} className="space-y-4">
+              <div className="p-3 bg-muted/30 border border-border rounded-lg text-xs space-y-1">
+                <p><span className="text-muted-foreground">Client:</span> <span className="text-foreground font-medium">{receiptQuotation.clientName}</span></p>
+                <p><span className="text-muted-foreground">Annual Premium:</span> <span className="text-foreground font-semibold">OMR {receiptQuotation.totalPremium.toFixed(3)}</span></p>
+                <p className="text-amber-600">Receipts will require Credit Controller approval before issuance.</p>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-muted-foreground mb-1">Receipt Date</label>
+                  <input type="date" required value={newReceipt.receiptDate}
+                    onChange={e => setNewReceipt(prev => ({ ...prev, receiptDate: e.target.value }))}
+                    className="w-full px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm" />
+                </div>
+                <div>
+                  <label className="block text-xs text-muted-foreground mb-1">Payment Mode</label>
+                  <select value={newReceipt.paymentMode}
+                    onChange={e => setNewReceipt(prev => ({ ...prev, paymentMode: e.target.value as typeof prev.paymentMode }))}
+                    className="w-full px-3 py-2.5 bg-muted/50 border border-border rounded-lg text-sm">
+                    <option value="Cash">Cash</option>
+                    <option value="Cheque">Cheque</option>
+                    <option value="Bank Transfer">Bank Transfer</option>
+                    <option value="Online">Online</option>
+                  </select>
+                </div>
+                <div className="col-span-2">
+                  <label className="block text-xs text-muted-foreground mb-1">Amount (OMR)</label>
+                  <input type="number" min="0" step="0.001" required value={newReceipt.amount}
+                    onChange={e => setNewReceipt(prev => ({ ...prev, amount: Number(e.target.value) }))}
+                    className="w-full px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm" />
+                </div>
+                <div className="col-span-2">
+                  <label className="block text-xs text-muted-foreground mb-1">Remarks</label>
+                  <input type="text" placeholder="Cheque #, bank ref, notes…" value={newReceipt.remarks}
+                    onChange={e => setNewReceipt(prev => ({ ...prev, remarks: e.target.value }))}
+                    className="w-full px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm" />
+                </div>
+              </div>
+              {(receiptQuotation.receipts || []).length > 0 && (
+                <div className="border border-border rounded-lg max-h-40 overflow-y-auto">
+                  <table className="w-full text-xs">
+                    <thead className="bg-muted/30">
+                      <tr>
+                        <th className="text-left px-3 py-2">Receipt #</th>
+                        <th className="text-left px-3 py-2">Mode</th>
+                        <th className="text-right px-3 py-2">Amount</th>
+                        <th className="text-left px-3 py-2">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(receiptQuotation.receipts || []).map(r => (
+                        <tr key={r.id} className="border-t border-border/40">
+                          <td className="px-3 py-2 text-foreground">{r.receiptNo}</td>
+                          <td className="px-3 py-2 text-muted-foreground">{r.paymentMode}</td>
+                          <td className="px-3 py-2 text-right text-foreground">{r.amount.toFixed(3)}</td>
+                          <td className="px-3 py-2">
+                            <span className={`px-1.5 py-0.5 rounded ${
+                              r.status === 'Approved' ? 'bg-emerald-500/15 text-emerald-600' :
+                              r.status === 'Rejected' ? 'bg-destructive/10 text-destructive' :
+                              'bg-amber-500/15 text-amber-600'
+                            }`}>{r.status}</span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              <button type="submit" className="w-full py-2.5 bg-primary text-primary-foreground rounded-lg font-medium text-sm hover:bg-primary/90">
+                Submit Receipt for Credit Approval
+              </button>
+            </form>
           )}
         </DialogContent>
       </Dialog>
