@@ -156,13 +156,24 @@ const Quotations = () => {
   const handleConvertToProposal = () => {
     if (!convertQuotation || !allMedicalAnswered) return;
     const proposalNo = `PP-2026-${String(proposals.length + 1).padStart(4, '0')}`;
+    // Carry approved quotation receipts into the proposal
+    const approvedReceipts = (convertQuotation.receipts || [])
+      .filter(r => r.status === 'Approved')
+      .map(r => ({
+        id: r.id,
+        receiptNo: r.receiptNo,
+        receiptDate: r.receiptDate,
+        paymentMode: r.paymentMode,
+        amount: r.amount,
+        remarks: r.remarks ? `${r.remarks} (from quotation)` : 'Carried from quotation',
+      }));
     setProposals(prev => [...prev, {
       id: String(proposals.length + 1), proposalNo, quotRef: convertQuotation.quotRef,
       clientName: convertQuotation.clientName, uwDecision: 'Pending', status: 'Pending UW' as const,
       premiumFrequency: convertQuotation.premiumFrequency,
       createdAt: new Date().toISOString().split('T')[0],
       medicalQuestions: [...medicalQuestions],
-      receipts: [], credits: [],
+      receipts: approvedReceipts, credits: [],
       totalPremiumDue: convertQuotation.totalPremium,
     }]);
     setQuotations(prev => prev.map(x => x.id === convertQuotation.id ? { ...x, status: 'Converted' as const } : x));
