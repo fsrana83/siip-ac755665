@@ -1,13 +1,17 @@
 import { useState, useMemo } from 'react';
 import { mockReinsurance, ReinsuranceCession } from '@/lib/mockData';
-import { Search, Plus, AlertTriangle, ShieldCheck, Pencil, Check, X, Trash2, History } from 'lucide-react';
+import { Search, Plus, AlertTriangle, ShieldCheck, Pencil, Check, X, Trash2, History, Download, FileText } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
 import { useConfig } from '@/contexts/ConfigContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
 import { computeCapacityStatuses } from '@/lib/capacityUtils';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const statusStyles: Record<string, string> = {
   Active: 'status-active',
@@ -27,6 +31,12 @@ const Reinsurance = () => {
   const [editingTreatyId, setEditingTreatyId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<{ treatyCapacity: number; effectiveFrom: string; effectiveTo: string }>({ treatyCapacity: 0, effectiveFrom: '', effectiveTo: '' });
   const [deleteTreatyId, setDeleteTreatyId] = useState<string | null>(null);
+  // Audit log filters
+  const [auditSearch, setAuditSearch] = useState('');
+  const [auditTreatyCode, setAuditTreatyCode] = useState<string>('all');
+  const [auditAction, setAuditAction] = useState<'all' | 'Update' | 'Delete'>('all');
+  const [auditDateFrom, setAuditDateFrom] = useState('');
+  const [auditDateTo, setAuditDateTo] = useState('');
 
   const actor = user?.fullName || user?.username || 'System';
 
@@ -148,6 +158,87 @@ const Reinsurance = () => {
 
   const exceedances = capacityStatuses.filter(c => c.exceeded);
   const warnings = capacityStatuses.filter(c => c.warning && !c.exceeded);
+
+  // Active cessions per treaty name (used to disable delete)
+  const activeCessionsByTreatyName = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const c of data) {
+      if (c.status === 'Active') map[c.treatyName] = (map[c.treatyName] || 0) + 1;
+    }
+    return map;
+  }, [data]);
+
+  const filteredAuditLog = useMemo(() => {
+    const q = auditSearch.trim().toLowerCase();
+    return treatyAuditLog.filter(e => {
+      if (auditTreatyCode !== 'all' && e.treatyCode !== auditTreatyCode) return false;
+      if (auditAction !== 'all' && e.action !== auditAction) return false;
+      if (auditDateFrom && e.changedAt.slice(0, 10) < auditDateFrom) return false;
+      if (auditDateTo && e.changedAt.slice(0, 10) > auditDateTo) return false;
+      if (q) {
+        const hay = `${e.treatyCode} ${e.treatyName} ${e.changedBy} ${e.action} ${e.changes.map(c => `${c.field} ${c.from} ${c.to}`).join(' ')}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [treatyAuditLog, auditSearch, auditTreatyCode, auditAction, auditDateFrom, auditDateTo]);
+
+  const auditTreatyCodes = useMemo(
+    () => Array.from(new Set(treatyAuditLog.map(e => e.treatyCode))).sort(),
+    [treatyAuditLog],
+  );
+
+  const formatChanges = (changes: { field: string; from: string | number; to: string | number }[]) =>
+    changes.map(c => `${c.field}: ${c.from} → ${c.to}`).join('; ');
+
+  const exportAuditCSV = () => {
+    const headers = ['Timestamp', 'User', 'Treaty Code', 'Treaty Name', 'Action', 'Changes'];
+    const rows = filteredAuditLog.map(e => [
+      new Date(e.changedAt).toISOString(),
+      e.changedBy,
+      e.treatyCode,
+      e.treatyName,
+      e.action,
+      formatChanges(e.changes),
+    ]);
+    const escape = (v: string | number) => {
+      const s = String(v);
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const csv = [headers, ...rows].map(r => r.map(escape).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `treaty-audit-log-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast({ title: 'Exported', description: `${filteredAuditLog.length} audit entries exported as CSV.` });
+  };
+
+  const exportAuditPDF = () => {
+    const doc = new jsPDF({ orientation: 'landscape' });
+    doc.setFontSize(14);
+    doc.text('Treaty Audit Log', 14, 15);
+    doc.setFontSize(9);
+    doc.text(`Generated: ${new Date().toLocaleString()} • ${filteredAuditLog.length} entries`, 14, 22);
+    autoTable(doc, {
+      startY: 28,
+      head: [['Timestamp', 'User', 'Treaty', 'Action', 'Changes']],
+      body: filteredAuditLog.map(e => [
+        new Date(e.changedAt).toLocaleString(),
+        e.changedBy,
+        `${e.treatyCode} — ${e.treatyName}`,
+        e.action,
+        formatChanges(e.changes),
+      ]),
+      styles: { fontSize: 8, cellPadding: 2 },
+      headStyles: { fillColor: [37, 99, 235] },
+    });
+    doc.save(`treaty-audit-log-${new Date().toISOString().slice(0, 10)}.pdf`);
+    toast({ title: 'Exported', description: `${filteredAuditLog.length} audit entries exported as PDF.` });
+  };
+
 
   const selectedTreaty = treaties.find(t => t.code === selectedTreatyCode);
   const selectedTreatyParticipants = participants.filter(p => p.treatyCode === selectedTreatyCode);
@@ -426,11 +517,33 @@ const Reinsurance = () => {
                         <button onClick={() => startEdit(c.treatyCode)} className="p-1.5 rounded hover:bg-primary/10 text-primary" title="Edit">
                           <Pencil className="w-4 h-4" />
                         </button>
-                        {treaty && (
-                          <button onClick={() => setDeleteTreatyId(treaty.id)} className="p-1.5 rounded hover:bg-destructive/10 text-destructive" title="Delete">
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        )}
+                        {treaty && (() => {
+                          const activeCount = activeCessionsByTreatyName[treaty.name] || 0;
+                          const blocked = activeCount > 0;
+                          return (
+                            <TooltipProvider delayDuration={150}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span tabIndex={0}>
+                                    <button
+                                      onClick={() => !blocked && setDeleteTreatyId(treaty.id)}
+                                      disabled={blocked}
+                                      aria-disabled={blocked}
+                                      className={`p-1.5 rounded ${blocked ? 'text-muted-foreground/40 cursor-not-allowed' : 'text-destructive hover:bg-destructive/10'}`}
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  {blocked
+                                    ? `Cannot delete — ${activeCount} active cession${activeCount > 1 ? 's' : ''} reference this treaty. Void or reassign first.`
+                                    : 'Delete treaty'}
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          );
+                        })()}
                       </div>
                     )}
                   </td>
@@ -500,10 +613,88 @@ const Reinsurance = () => {
 
       {/* Treaty Audit Log */}
       <div className="glass-card">
-        <div className="p-4 border-b border-border/50 flex items-center gap-2">
+        <div className="p-4 border-b border-border/50 flex flex-wrap items-center gap-2">
           <History className="w-4 h-4 text-primary" />
           <h3 className="text-sm font-semibold text-foreground">Treaty Audit Log</h3>
-          <span className="text-xs text-muted-foreground ml-auto">{treatyAuditLog.length} entries</span>
+          <span className="text-xs text-muted-foreground">
+            {filteredAuditLog.length} of {treatyAuditLog.length} entries
+          </span>
+          <div className="ml-auto">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  disabled={filteredAuditLog.length === 0}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-md border border-border bg-muted/30 hover:bg-muted/60 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Download className="w-4 h-4" /> Export
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={exportAuditCSV}>
+                  <FileText className="w-4 h-4 mr-2" /> Export as CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={exportAuditPDF}>
+                  <FileText className="w-4 h-4 mr-2" /> Export as PDF
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+        <div className="p-4 border-b border-border/50 grid grid-cols-1 md:grid-cols-5 gap-3">
+          <div className="relative md:col-span-2">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Search user, treaty, field..."
+              value={auditSearch}
+              onChange={(e) => setAuditSearch(e.target.value)}
+              className="w-full pl-10 pr-3 py-2 bg-muted/50 border border-border rounded-lg text-sm"
+            />
+          </div>
+          <select
+            value={auditTreatyCode}
+            onChange={(e) => setAuditTreatyCode(e.target.value)}
+            className="px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm"
+          >
+            <option value="all">All treaties</option>
+            {auditTreatyCodes.map(code => (
+              <option key={code} value={code}>{code}</option>
+            ))}
+          </select>
+          <select
+            value={auditAction}
+            onChange={(e) => setAuditAction(e.target.value as 'all' | 'Update' | 'Delete')}
+            className="px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm"
+          >
+            <option value="all">All actions</option>
+            <option value="Update">Update</option>
+            <option value="Delete">Delete</option>
+          </select>
+          <div className="flex items-center gap-2">
+            <input
+              type="date"
+              value={auditDateFrom}
+              onChange={(e) => setAuditDateFrom(e.target.value)}
+              className="flex-1 px-2 py-2 bg-muted/50 border border-border rounded-lg text-sm"
+              aria-label="From date"
+            />
+            <span className="text-xs text-muted-foreground">to</span>
+            <input
+              type="date"
+              value={auditDateTo}
+              onChange={(e) => setAuditDateTo(e.target.value)}
+              className="flex-1 px-2 py-2 bg-muted/50 border border-border rounded-lg text-sm"
+              aria-label="To date"
+            />
+          </div>
+          {(auditSearch || auditTreatyCode !== 'all' || auditAction !== 'all' || auditDateFrom || auditDateTo) && (
+            <button
+              onClick={() => { setAuditSearch(''); setAuditTreatyCode('all'); setAuditAction('all'); setAuditDateFrom(''); setAuditDateTo(''); }}
+              className="md:col-span-5 text-xs text-primary hover:underline text-left"
+            >
+              Clear filters
+            </button>
+          )}
         </div>
         <div className="overflow-x-auto max-h-96 overflow-y-auto">
           <table className="w-full">
@@ -517,11 +708,13 @@ const Reinsurance = () => {
               </tr>
             </thead>
             <tbody>
-              {treatyAuditLog.length === 0 ? (
+              {filteredAuditLog.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-6 text-center text-sm text-muted-foreground">No audit entries yet.</td>
+                  <td colSpan={5} className="px-4 py-6 text-center text-sm text-muted-foreground">
+                    {treatyAuditLog.length === 0 ? 'No audit entries yet.' : 'No entries match the current filters.'}
+                  </td>
                 </tr>
-              ) : treatyAuditLog.map(e => (
+              ) : filteredAuditLog.map(e => (
                 <tr key={e.id} className="border-b border-border/30">
                   <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">{new Date(e.changedAt).toLocaleString()}</td>
                   <td className="px-4 py-3 text-sm text-foreground">{e.changedBy}</td>
