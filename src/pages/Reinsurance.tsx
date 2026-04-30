@@ -422,9 +422,16 @@ const Reinsurance = () => {
                         </button>
                       </div>
                     ) : (
-                      <button onClick={() => startEdit(c.treatyCode)} className="p-1.5 rounded hover:bg-primary/10 text-primary" title="Edit">
-                        <Pencil className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center justify-end gap-1">
+                        <button onClick={() => startEdit(c.treatyCode)} className="p-1.5 rounded hover:bg-primary/10 text-primary" title="Edit">
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        {treaty && (
+                          <button onClick={() => setDeleteTreatyId(treaty.id)} className="p-1.5 rounded hover:bg-destructive/10 text-destructive" title="Delete">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
                     )}
                   </td>
                 </tr>
