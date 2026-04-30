@@ -613,10 +613,88 @@ const Reinsurance = () => {
 
       {/* Treaty Audit Log */}
       <div className="glass-card">
-        <div className="p-4 border-b border-border/50 flex items-center gap-2">
+        <div className="p-4 border-b border-border/50 flex flex-wrap items-center gap-2">
           <History className="w-4 h-4 text-primary" />
           <h3 className="text-sm font-semibold text-foreground">Treaty Audit Log</h3>
-          <span className="text-xs text-muted-foreground ml-auto">{treatyAuditLog.length} entries</span>
+          <span className="text-xs text-muted-foreground">
+            {filteredAuditLog.length} of {treatyAuditLog.length} entries
+          </span>
+          <div className="ml-auto">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  disabled={filteredAuditLog.length === 0}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-md border border-border bg-muted/30 hover:bg-muted/60 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Download className="w-4 h-4" /> Export
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={exportAuditCSV}>
+                  <FileText className="w-4 h-4 mr-2" /> Export as CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={exportAuditPDF}>
+                  <FileText className="w-4 h-4 mr-2" /> Export as PDF
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+        <div className="p-4 border-b border-border/50 grid grid-cols-1 md:grid-cols-5 gap-3">
+          <div className="relative md:col-span-2">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Search user, treaty, field..."
+              value={auditSearch}
+              onChange={(e) => setAuditSearch(e.target.value)}
+              className="w-full pl-10 pr-3 py-2 bg-muted/50 border border-border rounded-lg text-sm"
+            />
+          </div>
+          <select
+            value={auditTreatyCode}
+            onChange={(e) => setAuditTreatyCode(e.target.value)}
+            className="px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm"
+          >
+            <option value="all">All treaties</option>
+            {auditTreatyCodes.map(code => (
+              <option key={code} value={code}>{code}</option>
+            ))}
+          </select>
+          <select
+            value={auditAction}
+            onChange={(e) => setAuditAction(e.target.value as 'all' | 'Update' | 'Delete')}
+            className="px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm"
+          >
+            <option value="all">All actions</option>
+            <option value="Update">Update</option>
+            <option value="Delete">Delete</option>
+          </select>
+          <div className="flex items-center gap-2">
+            <input
+              type="date"
+              value={auditDateFrom}
+              onChange={(e) => setAuditDateFrom(e.target.value)}
+              className="flex-1 px-2 py-2 bg-muted/50 border border-border rounded-lg text-sm"
+              aria-label="From date"
+            />
+            <span className="text-xs text-muted-foreground">to</span>
+            <input
+              type="date"
+              value={auditDateTo}
+              onChange={(e) => setAuditDateTo(e.target.value)}
+              className="flex-1 px-2 py-2 bg-muted/50 border border-border rounded-lg text-sm"
+              aria-label="To date"
+            />
+          </div>
+          {(auditSearch || auditTreatyCode !== 'all' || auditAction !== 'all' || auditDateFrom || auditDateTo) && (
+            <button
+              onClick={() => { setAuditSearch(''); setAuditTreatyCode('all'); setAuditAction('all'); setAuditDateFrom(''); setAuditDateTo(''); }}
+              className="md:col-span-5 text-xs text-primary hover:underline text-left"
+            >
+              Clear filters
+            </button>
+          )}
         </div>
         <div className="overflow-x-auto max-h-96 overflow-y-auto">
           <table className="w-full">
@@ -630,11 +708,13 @@ const Reinsurance = () => {
               </tr>
             </thead>
             <tbody>
-              {treatyAuditLog.length === 0 ? (
+              {filteredAuditLog.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-6 text-center text-sm text-muted-foreground">No audit entries yet.</td>
+                  <td colSpan={5} className="px-4 py-6 text-center text-sm text-muted-foreground">
+                    {treatyAuditLog.length === 0 ? 'No audit entries yet.' : 'No entries match the current filters.'}
+                  </td>
                 </tr>
-              ) : treatyAuditLog.map(e => (
+              ) : filteredAuditLog.map(e => (
                 <tr key={e.id} className="border-b border-border/30">
                   <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">{new Date(e.changedAt).toLocaleString()}</td>
                   <td className="px-4 py-3 text-sm text-foreground">{e.changedBy}</td>
