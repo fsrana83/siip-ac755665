@@ -497,7 +497,6 @@ const Reinsurance = () => {
           </table>
         </div>
       </div>
-      </div>
 
       {/* Treaty Audit Log */}
       <div className="glass-card">
