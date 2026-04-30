@@ -1,11 +1,12 @@
 import { useState, useMemo } from 'react';
-import { Quotation, Client, MedicalQuestion, PremiumFrequency, FREQUENCY_DIVISORS } from '@/lib/types';
-import { Plus, Search, UserPlus, Calculator, Ban, ArrowRight, MoreHorizontal, FileText } from 'lucide-react';
+import { Quotation, Client, MedicalQuestion, PremiumFrequency, FREQUENCY_DIVISORS, QuotationReceipt } from '@/lib/types';
+import { Plus, Search, UserPlus, Calculator, Ban, ArrowRight, MoreHorizontal, FileText, Receipt } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
 import { useData } from '@/contexts/DataContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { PRODUCTS, calculatePremium, calculateAge, PremiumBreakdown } from '@/lib/premiumEngine';
 import { DEFAULT_MEDICAL_QUESTIONS } from '@/lib/medicalQuestions';
 import { useConfig } from '@/contexts/ConfigContext';
