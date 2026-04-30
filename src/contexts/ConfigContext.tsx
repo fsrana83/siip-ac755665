@@ -52,6 +52,17 @@ export interface TreatyParticipant {
   maxLiability: number;
 }
 
+export interface TreatyAuditEntry {
+  id: string;
+  treatyId: string;
+  treatyCode: string;
+  treatyName: string;
+  action: 'Update' | 'Delete';
+  changedBy: string;
+  changedAt: string; // ISO timestamp
+  changes: { field: string; from: string | number; to: string | number }[];
+}
+
 interface ConfigContextType {
   vatEntries: VATEntry[];
   currentVATRate: (coverType: string) => number;
@@ -64,6 +75,8 @@ interface ConfigContextType {
   setTreaties: React.Dispatch<React.SetStateAction<Treaty[]>>;
   participants: TreatyParticipant[];
   setParticipants: React.Dispatch<React.SetStateAction<TreatyParticipant[]>>;
+  treatyAuditLog: TreatyAuditEntry[];
+  addTreatyAudit: (entry: Omit<TreatyAuditEntry, 'id' | 'changedAt'>) => void;
 }
 
 const ConfigContext = createContext<ConfigContextType | null>(null);
@@ -122,6 +135,14 @@ export const ConfigProvider = ({ children }: { children: ReactNode }) => {
   const [reinsurers, setReinsurers] = useState<Reinsurer[]>(initialReinsurers);
   const [treaties, setTreaties] = useState<Treaty[]>(initialTreaties);
   const [participants, setParticipants] = useState<TreatyParticipant[]>(initialParticipants);
+  const [treatyAuditLog, setTreatyAuditLog] = useState<TreatyAuditEntry[]>([]);
+
+  const addTreatyAudit = (entry: Omit<TreatyAuditEntry, 'id' | 'changedAt'>) => {
+    setTreatyAuditLog(prev => [
+      { ...entry, id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, changedAt: new Date().toISOString() },
+      ...prev,
+    ]);
+  };
 
   const currentVATRate = (coverType: string): number => {
     const today = new Date().toISOString().split('T')[0];
@@ -152,6 +173,7 @@ export const ConfigProvider = ({ children }: { children: ReactNode }) => {
       reinsurers, setReinsurers,
       treaties, setTreaties,
       participants, setParticipants,
+      treatyAuditLog, addTreatyAudit,
     }}>
       {children}
     </ConfigContext.Provider>

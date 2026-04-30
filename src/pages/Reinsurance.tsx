@@ -1,9 +1,11 @@
 import { useState, useMemo } from 'react';
 import { mockReinsurance, ReinsuranceCession } from '@/lib/mockData';
-import { Search, Plus, AlertTriangle, ShieldCheck, Pencil, Check, X } from 'lucide-react';
+import { Search, Plus, AlertTriangle, ShieldCheck, Pencil, Check, X, Trash2, History } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useConfig } from '@/contexts/ConfigContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
 import { computeCapacityStatuses } from '@/lib/capacityUtils';
 
@@ -19,10 +21,14 @@ const Reinsurance = () => {
   const [open, setOpen] = useState(false);
   const [selectedTreatyCode, setSelectedTreatyCode] = useState('');
   const { toast } = useToast();
-  const { reinsurers, treaties, setTreaties, participants } = useConfig();
+  const { reinsurers, treaties, setTreaties, participants, treatyAuditLog, addTreatyAudit } = useConfig();
   const { policies } = useData();
+  const { user } = useAuth();
   const [editingTreatyId, setEditingTreatyId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<{ treatyCapacity: number; effectiveFrom: string; effectiveTo: string }>({ treatyCapacity: 0, effectiveFrom: '', effectiveTo: '' });
+  const [deleteTreatyId, setDeleteTreatyId] = useState<string | null>(null);
+
+  const actor = user?.fullName || user?.username || 'System';
 
   const startEdit = (treatyCode: string) => {
     const t = treaties.find(x => x.code === treatyCode);
@@ -33,8 +39,15 @@ const Reinsurance = () => {
 
   const cancelEdit = () => setEditingTreatyId(null);
 
+  // Returns true if [aFrom,aTo] overlaps [bFrom,bTo]
+  const datesOverlap = (aFrom: string, aTo: string, bFrom: string, bTo: string) =>
+    aFrom <= bTo && bFrom <= aTo;
+
   const saveEdit = () => {
     if (!editingTreatyId) return;
+    const original = treaties.find(t => t.id === editingTreatyId);
+    if (!original) return;
+
     if (editForm.treatyCapacity < 0 || !editForm.effectiveFrom || !editForm.effectiveTo) {
       toast({ title: 'Invalid input', description: 'Capacity must be ≥ 0 and dates required.', variant: 'destructive' });
       return;
@@ -43,11 +56,84 @@ const Reinsurance = () => {
       toast({ title: 'Invalid dates', description: 'Effective To must be after Effective From.', variant: 'destructive' });
       return;
     }
+
+    // Overlap check: same treaty code, different id
+    const conflict = treaties.find(t =>
+      t.code === original.code &&
+      t.id !== original.id &&
+      datesOverlap(editForm.effectiveFrom, editForm.effectiveTo, t.effectiveFrom, t.effectiveTo),
+    );
+    if (conflict) {
+      toast({
+        title: 'Date range overlaps',
+        description: `Overlaps existing period ${conflict.effectiveFrom} → ${conflict.effectiveTo} for treaty ${conflict.code}.`,
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const changes: { field: string; from: string | number; to: string | number }[] = [];
+    if (original.treatyCapacity !== editForm.treatyCapacity) {
+      changes.push({ field: 'treatyCapacity', from: original.treatyCapacity, to: editForm.treatyCapacity });
+    }
+    if (original.effectiveFrom !== editForm.effectiveFrom) {
+      changes.push({ field: 'effectiveFrom', from: original.effectiveFrom, to: editForm.effectiveFrom });
+    }
+    if (original.effectiveTo !== editForm.effectiveTo) {
+      changes.push({ field: 'effectiveTo', from: original.effectiveTo, to: editForm.effectiveTo });
+    }
+
     setTreaties(prev => prev.map(t => t.id === editingTreatyId
       ? { ...t, treatyCapacity: editForm.treatyCapacity, effectiveFrom: editForm.effectiveFrom, effectiveTo: editForm.effectiveTo }
       : t));
+
+    if (changes.length > 0) {
+      addTreatyAudit({
+        treatyId: original.id,
+        treatyCode: original.code,
+        treatyName: original.name,
+        action: 'Update',
+        changedBy: actor,
+        changes,
+      });
+    }
+
     toast({ title: 'Treaty updated', description: 'Capacity and effective dates saved.' });
     setEditingTreatyId(null);
+  };
+
+  const confirmDelete = () => {
+    if (!deleteTreatyId) return;
+    const t = treaties.find(x => x.id === deleteTreatyId);
+    if (!t) return;
+
+    const activeCessions = data.filter(c => c.treatyName === t.name && c.status === 'Active');
+    if (activeCessions.length > 0) {
+      toast({
+        title: 'Cannot delete treaty',
+        description: `${activeCessions.length} active cession(s) reference ${t.name}. Void or reassign them first.`,
+        variant: 'destructive',
+      });
+      setDeleteTreatyId(null);
+      return;
+    }
+
+    setTreaties(prev => prev.filter(x => x.id !== deleteTreatyId));
+    addTreatyAudit({
+      treatyId: t.id,
+      treatyCode: t.code,
+      treatyName: t.name,
+      action: 'Delete',
+      changedBy: actor,
+      changes: [
+        { field: 'treatyCapacity', from: t.treatyCapacity, to: '—' },
+        { field: 'effectiveFrom', from: t.effectiveFrom, to: '—' },
+        { field: 'effectiveTo', from: t.effectiveTo, to: '—' },
+      ],
+    });
+    if (editingTreatyId === t.id) setEditingTreatyId(null);
+    toast({ title: 'Treaty deleted', description: `${t.code} — ${t.name} removed.` });
+    setDeleteTreatyId(null);
   };
 
   const policyClientMap = useMemo(
@@ -336,9 +422,16 @@ const Reinsurance = () => {
                         </button>
                       </div>
                     ) : (
-                      <button onClick={() => startEdit(c.treatyCode)} className="p-1.5 rounded hover:bg-primary/10 text-primary" title="Edit">
-                        <Pencil className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center justify-end gap-1">
+                        <button onClick={() => startEdit(c.treatyCode)} className="p-1.5 rounded hover:bg-primary/10 text-primary" title="Edit">
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        {treaty && (
+                          <button onClick={() => setDeleteTreatyId(treaty.id)} className="p-1.5 rounded hover:bg-destructive/10 text-destructive" title="Delete">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
                     )}
                   </td>
                 </tr>
@@ -404,6 +497,78 @@ const Reinsurance = () => {
           </table>
         </div>
       </div>
+
+      {/* Treaty Audit Log */}
+      <div className="glass-card">
+        <div className="p-4 border-b border-border/50 flex items-center gap-2">
+          <History className="w-4 h-4 text-primary" />
+          <h3 className="text-sm font-semibold text-foreground">Treaty Audit Log</h3>
+          <span className="text-xs text-muted-foreground ml-auto">{treatyAuditLog.length} entries</span>
+        </div>
+        <div className="overflow-x-auto max-h-96 overflow-y-auto">
+          <table className="w-full">
+            <thead className="sticky top-0 bg-background z-10">
+              <tr className="table-header">
+                <th className="text-left px-4 py-3">Timestamp</th>
+                <th className="text-left px-4 py-3">User</th>
+                <th className="text-left px-4 py-3">Treaty</th>
+                <th className="text-left px-4 py-3">Action</th>
+                <th className="text-left px-4 py-3">Changes</th>
+              </tr>
+            </thead>
+            <tbody>
+              {treatyAuditLog.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-4 py-6 text-center text-sm text-muted-foreground">No audit entries yet.</td>
+                </tr>
+              ) : treatyAuditLog.map(e => (
+                <tr key={e.id} className="border-b border-border/30">
+                  <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">{new Date(e.changedAt).toLocaleString()}</td>
+                  <td className="px-4 py-3 text-sm text-foreground">{e.changedBy}</td>
+                  <td className="px-4 py-3 text-sm text-foreground">{e.treatyCode} <span className="text-muted-foreground">— {e.treatyName}</span></td>
+                  <td className="px-4 py-3">
+                    <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${e.action === 'Delete' ? 'bg-destructive/10 text-destructive' : 'bg-primary/10 text-primary'}`}>
+                      {e.action}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-xs text-muted-foreground">
+                    {e.changes.map((c, i) => (
+                      <div key={i}>
+                        <span className="font-medium text-foreground">{c.field}:</span>{' '}
+                        <span className="line-through">{typeof c.from === 'number' ? c.from.toLocaleString() : c.from}</span>
+                        {' → '}
+                        <span className="text-foreground">{typeof c.to === 'number' ? c.to.toLocaleString() : c.to}</span>
+                      </div>
+                    ))}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <AlertDialog open={!!deleteTreatyId} onOpenChange={(v) => { if (!v) setDeleteTreatyId(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete treaty?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {(() => {
+                const t = treaties.find(x => x.id === deleteTreatyId);
+                return t
+                  ? `This will permanently remove ${t.code} — ${t.name} and is recorded in the audit log. Treaties with active cessions cannot be deleted.`
+                  : 'Are you sure?';
+              })()}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
