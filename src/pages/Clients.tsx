@@ -92,24 +92,73 @@ const Clients = () => {
           </DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>New Client</DialogTitle></DialogHeader>
-            <form onSubmit={handleAdd} className="space-y-4">
-              {[
-                { name: 'fullName', label: 'Full Name', placeholder: 'Ahmed Al Balushi' },
-                { name: 'gender', label: 'Gender', placeholder: 'Male / Female' },
-                { name: 'dob', label: 'Date of Birth', type: 'date' },
-                { name: 'nationality', label: 'Nationality', placeholder: 'Omani' },
-                { name: 'idType', label: 'ID Type', placeholder: 'National ID / Passport' },
-                { name: 'idNumber', label: 'ID Number', placeholder: '12345678' },
-                { name: 'phone', label: 'Phone', placeholder: '+968 9123 4567' },
-                { name: 'email', label: 'Email', placeholder: 'name@email.com', type: 'email' },
-              ].map(f => (
-                <div key={f.name}>
-                  <label className="block text-xs text-muted-foreground mb-1">{f.label}</label>
-                  <input name={f.name} type={f.type || 'text'} placeholder={f.placeholder} required
-                    className="w-full px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" />
-                </div>
-              ))}
-              <button type="submit" className="w-full py-2.5 bg-primary text-primary-foreground rounded-lg font-medium text-sm hover:bg-primary/90">Add Client</button>
+            <form onSubmit={handleAdd} className="grid grid-cols-2 gap-3">
+              <div className="col-span-2">
+                <label className="block text-xs text-muted-foreground mb-1">Full Name</label>
+                <input name="fullName" type="text" placeholder="Ahmed Al Balushi" required
+                  className="w-full px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" />
+              </div>
+              <div>
+                <label className="block text-xs text-muted-foreground mb-1">Gender</label>
+                <select name="gender" defaultValue="Male"
+                  className="w-full px-3 py-2.5 bg-muted/50 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50">
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs text-muted-foreground mb-1">Date of Birth</label>
+                <input name="dob" type="date" required
+                  className="w-full px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" />
+              </div>
+              <div>
+                <label className="block text-xs text-muted-foreground mb-1">Nationality</label>
+                <select name="nationality" defaultValue="Omani"
+                  className="w-full px-3 py-2.5 bg-muted/50 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50">
+                  <option value="Omani">Omani</option>
+                  <option value="Emirati">Emirati</option>
+                  <option value="Saudi">Saudi</option>
+                  <option value="Bahraini">Bahraini</option>
+                  <option value="Kuwaiti">Kuwaiti</option>
+                  <option value="Qatari">Qatari</option>
+                  <option value="Indian">Indian</option>
+                  <option value="Pakistani">Pakistani</option>
+                  <option value="Bangladeshi">Bangladeshi</option>
+                  <option value="Filipino">Filipino</option>
+                  <option value="Egyptian">Egyptian</option>
+                  <option value="Jordanian">Jordanian</option>
+                  <option value="British">British</option>
+                  <option value="American">American</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs text-muted-foreground mb-1">ID Type</label>
+                <select name="idType" defaultValue="National ID"
+                  className="w-full px-3 py-2.5 bg-muted/50 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50">
+                  <option value="National ID">National ID</option>
+                  <option value="Passport">Passport</option>
+                  <option value="Resident Card">Resident Card</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs text-muted-foreground mb-1">ID Number</label>
+                <input name="idNumber" type="text" placeholder="12345678" required
+                  className="w-full px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" />
+              </div>
+              <div>
+                <label className="block text-xs text-muted-foreground mb-1">Phone</label>
+                <input name="phone" type="text" placeholder="+968 9123 4567" required
+                  className="w-full px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" />
+              </div>
+              <div className="col-span-2">
+                <label className="block text-xs text-muted-foreground mb-1">Email</label>
+                <input name="email" type="email" placeholder="name@email.com" required
+                  className="w-full px-3 py-2 bg-muted/50 border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50" />
+              </div>
+              <div className="col-span-2">
+                <button type="submit" className="w-full py-2.5 bg-primary text-primary-foreground rounded-lg font-medium text-sm hover:bg-primary/90">Add Client</button>
+              </div>
             </form>
           </DialogContent>
         </Dialog>
