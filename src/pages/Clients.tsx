@@ -32,7 +32,16 @@ const clientSchema = z.object({
   email: z.string().trim().email('Invalid email address').max(255),
 });
 
-type ClientForm = z.infer<typeof clientSchema>;
+interface ClientForm {
+  fullName: string;
+  gender: 'Male' | 'Female';
+  dob: string;
+  nationality: string;
+  idType: string;
+  idNumber: string;
+  phone: string;
+  email: string;
+}
 type FieldErrors = Partial<Record<keyof ClientForm, string>>;
 
 const emptyForm: ClientForm = {
