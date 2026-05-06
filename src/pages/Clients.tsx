@@ -467,6 +467,11 @@ const Clients = () => {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-center gap-2">
+                      <button onClick={() => { setDetailsClient(c); setDetailsOpen(true); }}
+                        className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-foreground border border-border rounded-lg hover:bg-muted/50 transition-colors"
+                        title="View details">
+                        <Eye className="w-3 h-3" /> View
+                      </button>
                       <button onClick={() => openEditDialog(c)}
                         className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-foreground border border-border rounded-lg hover:bg-muted/50 transition-colors"
                         title="Edit client">
