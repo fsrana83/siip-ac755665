@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { z } from 'zod';
 import { Client } from '@/lib/types';
-import { Search, Plus, UserCheck, Clock, Shield, FileCheck, Globe, CheckCircle, XCircle, Pencil } from 'lucide-react';
+import { Search, Plus, UserCheck, Clock, Shield, FileCheck, Globe, CheckCircle, XCircle, Pencil, Eye, User, Mail, Phone, Calendar, IdCard, Flag } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useData } from '@/contexts/DataContext';
