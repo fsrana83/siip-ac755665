@@ -149,6 +149,8 @@ const Clients = () => {
   const [open, setOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [kycOpen, setKycOpen] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [detailsClient, setDetailsClient] = useState<Client | null>(null);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [editingClientId, setEditingClientId] = useState<string | null>(null);
   const [checklist, setChecklist] = useState<ComplianceChecklist>(defaultChecklist);
