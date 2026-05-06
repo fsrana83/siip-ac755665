@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { z } from 'zod';
 import { Client } from '@/lib/types';
-import { Search, Plus, UserCheck, Clock, Shield, FileCheck, Globe, CheckCircle, XCircle, Pencil } from 'lucide-react';
+import { Search, Plus, UserCheck, Clock, Shield, FileCheck, Globe, CheckCircle, XCircle, Pencil, Eye, User, Mail, Phone, Calendar, IdCard, Flag } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useData } from '@/contexts/DataContext';
@@ -72,6 +72,16 @@ const selectBase = 'w-full px-3 py-2.5 bg-muted/50 border rounded-lg text-sm tex
 
 const FieldError = ({ msg }: { msg?: string }) =>
   msg ? <p className="text-xs text-destructive mt-1">{msg}</p> : null;
+
+const DetailItem = ({ icon, label, value, mono }: { icon: React.ReactNode; label: string; value: string; mono?: boolean }) => (
+  <div className="flex items-start gap-2">
+    <span className="mt-0.5 text-muted-foreground">{icon}</span>
+    <div className="min-w-0">
+      <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</p>
+      <p className={`text-sm text-foreground break-words ${mono ? 'font-mono' : ''}`}>{value || '—'}</p>
+    </div>
+  </div>
+);
 
 interface ClientFormFieldsProps {
   values: ClientForm;
@@ -149,6 +159,8 @@ const Clients = () => {
   const [open, setOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [kycOpen, setKycOpen] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [detailsClient, setDetailsClient] = useState<Client | null>(null);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [editingClientId, setEditingClientId] = useState<string | null>(null);
   const [checklist, setChecklist] = useState<ComplianceChecklist>(defaultChecklist);
@@ -298,6 +310,72 @@ const Clients = () => {
               </button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Client Details Dialog */}
+      <Dialog open={detailsOpen} onOpenChange={(o) => { setDetailsOpen(o); if (!o) setDetailsClient(null); }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <User className="w-5 h-5 text-primary" /> Client Details
+            </DialogTitle>
+          </DialogHeader>
+          {detailsClient && (
+            <div className="space-y-5">
+              {/* Header card */}
+              <div className="flex items-center justify-between p-4 bg-muted/30 border border-border rounded-lg">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-full bg-primary/10 text-primary flex items-center justify-center font-display font-bold text-lg">
+                    {detailsClient.fullName.split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase()}
+                  </div>
+                  <div>
+                    <p className="text-base font-semibold text-foreground">{detailsClient.fullName}</p>
+                    <p className="text-xs text-muted-foreground">Client ID: {detailsClient.clientId}</p>
+                  </div>
+                </div>
+                <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${kycStyles[detailsClient.kycStatus]}`}>
+                  KYC {detailsClient.kycStatus}
+                </span>
+              </div>
+
+              {/* Personal Information */}
+              <div>
+                <h3 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+                  <User className="w-4 h-4 text-primary" /> Personal Information
+                </h3>
+                <div className="grid grid-cols-2 gap-3 p-4 bg-muted/30 border border-border rounded-lg">
+                  <DetailItem icon={<User className="w-3.5 h-3.5" />} label="Gender" value={detailsClient.gender} />
+                  <DetailItem icon={<Calendar className="w-3.5 h-3.5" />} label="Date of Birth" value={detailsClient.dob} />
+                  <DetailItem icon={<Flag className="w-3.5 h-3.5" />} label="Nationality" value={detailsClient.nationality} />
+                  <DetailItem icon={<IdCard className="w-3.5 h-3.5" />} label="ID Type" value={detailsClient.idType} />
+                  <DetailItem icon={<IdCard className="w-3.5 h-3.5" />} label="ID Number" value={detailsClient.idNumber} mono />
+                </div>
+              </div>
+
+              {/* Contact */}
+              <div>
+                <h3 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+                  <Phone className="w-4 h-4 text-primary" /> Contact
+                </h3>
+                <div className="grid grid-cols-2 gap-3 p-4 bg-muted/30 border border-border rounded-lg">
+                  <DetailItem icon={<Phone className="w-3.5 h-3.5" />} label="Phone" value={detailsClient.phone} />
+                  <DetailItem icon={<Mail className="w-3.5 h-3.5" />} label="Email" value={detailsClient.email} />
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button onClick={() => { setDetailsOpen(false); openEditDialog(detailsClient); }}
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 border border-border rounded-lg font-medium text-sm hover:bg-muted/50">
+                  <Pencil className="w-4 h-4" /> Edit Client
+                </button>
+                <button onClick={() => { setDetailsOpen(false); openKycDialog(detailsClient); }}
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium text-sm hover:bg-primary/90">
+                  <Shield className="w-4 h-4" /> KYC Review
+                </button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 
@@ -465,6 +543,11 @@ const Clients = () => {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-center gap-2">
+                      <button onClick={() => { setDetailsClient(c); setDetailsOpen(true); }}
+                        className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-foreground border border-border rounded-lg hover:bg-muted/50 transition-colors"
+                        title="View details">
+                        <Eye className="w-3 h-3" /> View
+                      </button>
                       <button onClick={() => openEditDialog(c)}
                         className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-foreground border border-border rounded-lg hover:bg-muted/50 transition-colors"
                         title="Edit client">
