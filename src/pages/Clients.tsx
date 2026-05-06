@@ -5,6 +5,7 @@ import { Search, Plus, UserCheck, Clock, Shield, FileCheck, Globe, CheckCircle, 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useData } from '@/contexts/DataContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 const kycStyles: Record<string, string> = {
   Approved: 'status-active',
