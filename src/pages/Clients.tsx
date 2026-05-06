@@ -303,6 +303,72 @@ const Clients = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Client Details Dialog */}
+      <Dialog open={detailsOpen} onOpenChange={(o) => { setDetailsOpen(o); if (!o) setDetailsClient(null); }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <User className="w-5 h-5 text-primary" /> Client Details
+            </DialogTitle>
+          </DialogHeader>
+          {detailsClient && (
+            <div className="space-y-5">
+              {/* Header card */}
+              <div className="flex items-center justify-between p-4 bg-muted/30 border border-border rounded-lg">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-full bg-primary/10 text-primary flex items-center justify-center font-display font-bold text-lg">
+                    {detailsClient.fullName.split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase()}
+                  </div>
+                  <div>
+                    <p className="text-base font-semibold text-foreground">{detailsClient.fullName}</p>
+                    <p className="text-xs text-muted-foreground">Client ID: {detailsClient.clientId}</p>
+                  </div>
+                </div>
+                <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${kycStyles[detailsClient.kycStatus]}`}>
+                  KYC {detailsClient.kycStatus}
+                </span>
+              </div>
+
+              {/* Personal Information */}
+              <div>
+                <h3 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+                  <User className="w-4 h-4 text-primary" /> Personal Information
+                </h3>
+                <div className="grid grid-cols-2 gap-3 p-4 bg-muted/30 border border-border rounded-lg">
+                  <DetailItem icon={<User className="w-3.5 h-3.5" />} label="Gender" value={detailsClient.gender} />
+                  <DetailItem icon={<Calendar className="w-3.5 h-3.5" />} label="Date of Birth" value={detailsClient.dob} />
+                  <DetailItem icon={<Flag className="w-3.5 h-3.5" />} label="Nationality" value={detailsClient.nationality} />
+                  <DetailItem icon={<IdCard className="w-3.5 h-3.5" />} label="ID Type" value={detailsClient.idType} />
+                  <DetailItem icon={<IdCard className="w-3.5 h-3.5" />} label="ID Number" value={detailsClient.idNumber} mono />
+                </div>
+              </div>
+
+              {/* Contact */}
+              <div>
+                <h3 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+                  <Phone className="w-4 h-4 text-primary" /> Contact
+                </h3>
+                <div className="grid grid-cols-2 gap-3 p-4 bg-muted/30 border border-border rounded-lg">
+                  <DetailItem icon={<Phone className="w-3.5 h-3.5" />} label="Phone" value={detailsClient.phone} />
+                  <DetailItem icon={<Mail className="w-3.5 h-3.5" />} label="Email" value={detailsClient.email} />
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button onClick={() => { setDetailsOpen(false); openEditDialog(detailsClient); }}
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 border border-border rounded-lg font-medium text-sm hover:bg-muted/50">
+                  <Pencil className="w-4 h-4" /> Edit Client
+                </button>
+                <button onClick={() => { setDetailsOpen(false); openKycDialog(detailsClient); }}
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium text-sm hover:bg-primary/90">
+                  <Shield className="w-4 h-4" /> KYC Review
+                </button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* KYC/AML/CRS Dialog */}
       <Dialog open={kycOpen} onOpenChange={setKycOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
