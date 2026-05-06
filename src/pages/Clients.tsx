@@ -183,15 +183,30 @@ const Clients = () => {
   };
   const emptyKycChecklist = { idVerified: false, addressVerified: false, pepScreening: false, sanctionsCheck: false, sourceOfFunds: false };
   const [detailsKyc, setDetailsKyc] = useState<DetailsKyc>({ status: 'Pending', checklist: emptyKycChecklist, notes: '' });
+  const [detailsKycBaseline, setDetailsKycBaseline] = useState<DetailsKyc>({ status: 'Pending', checklist: emptyKycChecklist, notes: '' });
+
+  const isDetailsKycDirty = () =>
+    JSON.stringify(detailsKyc) !== JSON.stringify(detailsKycBaseline);
 
   const openDetailsDialog = (c: Client) => {
-    setDetailsClient(c);
-    setDetailsKyc({
+    const initial: DetailsKyc = {
       status: c.kycStatus,
       checklist: { ...emptyKycChecklist, ...(c.kycChecklist ?? {}) },
       notes: c.kycNotes ?? '',
-    });
+    };
+    setDetailsClient(c);
+    setDetailsKyc(initial);
+    setDetailsKycBaseline(initial);
     setDetailsOpen(true);
+  };
+
+  const closeDetailsDialog = (force = false) => {
+    if (!force && isDetailsKycDirty()) {
+      const ok = window.confirm('You have unsaved KYC changes. Discard and close?');
+      if (!ok) return;
+    }
+    setDetailsOpen(false);
+    setDetailsClient(null);
   };
 
   const handleSaveDetailsKyc = () => {
@@ -207,6 +222,7 @@ const Clients = () => {
     };
     setClients(prev => prev.map(c => c.clientId === detailsClient.clientId ? updated : c));
     setDetailsClient(updated);
+    setDetailsKycBaseline(detailsKyc);
     toast({ title: 'KYC updated', description: `${updated.fullName} — ${updated.kycStatus}` });
   };
 
