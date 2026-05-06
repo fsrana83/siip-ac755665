@@ -173,6 +173,42 @@ const Clients = () => {
   const [editErrors, setEditErrors] = useState<FieldErrors>({});
 
   const { toast } = useToast();
+  const { user } = useAuth();
+
+  // Inline KYC edit state for the Details dialog
+  type DetailsKyc = {
+    status: 'Pending' | 'Approved' | 'Rejected';
+    checklist: { idVerified: boolean; addressVerified: boolean; pepScreening: boolean; sanctionsCheck: boolean; sourceOfFunds: boolean };
+    notes: string;
+  };
+  const emptyKycChecklist = { idVerified: false, addressVerified: false, pepScreening: false, sanctionsCheck: false, sourceOfFunds: false };
+  const [detailsKyc, setDetailsKyc] = useState<DetailsKyc>({ status: 'Pending', checklist: emptyKycChecklist, notes: '' });
+
+  const openDetailsDialog = (c: Client) => {
+    setDetailsClient(c);
+    setDetailsKyc({
+      status: c.kycStatus,
+      checklist: { ...emptyKycChecklist, ...(c.kycChecklist ?? {}) },
+      notes: c.kycNotes ?? '',
+    });
+    setDetailsOpen(true);
+  };
+
+  const handleSaveDetailsKyc = () => {
+    if (!detailsClient) return;
+    const stamp = new Date().toISOString();
+    const updated: Client = {
+      ...detailsClient,
+      kycStatus: detailsKyc.status,
+      kycChecklist: detailsKyc.checklist,
+      kycNotes: detailsKyc.notes,
+      kycUpdatedAt: stamp,
+      kycUpdatedBy: user?.fullName ?? user?.username ?? 'System',
+    };
+    setClients(prev => prev.map(c => c.clientId === detailsClient.clientId ? updated : c));
+    setDetailsClient(updated);
+    toast({ title: 'KYC updated', description: `${updated.fullName} — ${updated.kycStatus}` });
+  };
 
   const filtered = clients.filter(c =>
     c.fullName.toLowerCase().includes(search.toLowerCase()) ||
