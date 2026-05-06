@@ -73,6 +73,16 @@ const selectBase = 'w-full px-3 py-2.5 bg-muted/50 border rounded-lg text-sm tex
 const FieldError = ({ msg }: { msg?: string }) =>
   msg ? <p className="text-xs text-destructive mt-1">{msg}</p> : null;
 
+const DetailItem = ({ icon, label, value, mono }: { icon: React.ReactNode; label: string; value: string; mono?: boolean }) => (
+  <div className="flex items-start gap-2">
+    <span className="mt-0.5 text-muted-foreground">{icon}</span>
+    <div className="min-w-0">
+      <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</p>
+      <p className={`text-sm text-foreground break-words ${mono ? 'font-mono' : ''}`}>{value || '—'}</p>
+    </div>
+  </div>
+);
+
 interface ClientFormFieldsProps {
   values: ClientForm;
   errors: FieldErrors;
