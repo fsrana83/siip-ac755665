@@ -124,6 +124,16 @@ export interface Client {
   phone: string;
   email: string;
   kycStatus: 'Pending' | 'Approved' | 'Rejected';
+  kycChecklist?: {
+    idVerified: boolean;
+    addressVerified: boolean;
+    pepScreening: boolean;
+    sanctionsCheck: boolean;
+    sourceOfFunds: boolean;
+  };
+  kycNotes?: string;
+  kycUpdatedAt?: string;
+  kycUpdatedBy?: string;
 }
 
 export interface Claim {

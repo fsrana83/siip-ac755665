@@ -5,6 +5,7 @@ import { Search, Plus, UserCheck, Clock, Shield, FileCheck, Globe, CheckCircle, 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { useData } from '@/contexts/DataContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 const kycStyles: Record<string, string> = {
   Approved: 'status-active',
@@ -172,6 +173,42 @@ const Clients = () => {
   const [editErrors, setEditErrors] = useState<FieldErrors>({});
 
   const { toast } = useToast();
+  const { user } = useAuth();
+
+  // Inline KYC edit state for the Details dialog
+  type DetailsKyc = {
+    status: 'Pending' | 'Approved' | 'Rejected';
+    checklist: { idVerified: boolean; addressVerified: boolean; pepScreening: boolean; sanctionsCheck: boolean; sourceOfFunds: boolean };
+    notes: string;
+  };
+  const emptyKycChecklist = { idVerified: false, addressVerified: false, pepScreening: false, sanctionsCheck: false, sourceOfFunds: false };
+  const [detailsKyc, setDetailsKyc] = useState<DetailsKyc>({ status: 'Pending', checklist: emptyKycChecklist, notes: '' });
+
+  const openDetailsDialog = (c: Client) => {
+    setDetailsClient(c);
+    setDetailsKyc({
+      status: c.kycStatus,
+      checklist: { ...emptyKycChecklist, ...(c.kycChecklist ?? {}) },
+      notes: c.kycNotes ?? '',
+    });
+    setDetailsOpen(true);
+  };
+
+  const handleSaveDetailsKyc = () => {
+    if (!detailsClient) return;
+    const stamp = new Date().toISOString();
+    const updated: Client = {
+      ...detailsClient,
+      kycStatus: detailsKyc.status,
+      kycChecklist: detailsKyc.checklist,
+      kycNotes: detailsKyc.notes,
+      kycUpdatedAt: stamp,
+      kycUpdatedBy: user?.fullName ?? user?.username ?? 'System',
+    };
+    setClients(prev => prev.map(c => c.clientId === detailsClient.clientId ? updated : c));
+    setDetailsClient(updated);
+    toast({ title: 'KYC updated', description: `${updated.fullName} — ${updated.kycStatus}` });
+  };
 
   const filtered = clients.filter(c =>
     c.fullName.toLowerCase().includes(search.toLowerCase()) ||
@@ -334,8 +371,8 @@ const Clients = () => {
                     <p className="text-xs text-muted-foreground">Client ID: {detailsClient.clientId}</p>
                   </div>
                 </div>
-                <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${kycStyles[detailsClient.kycStatus]}`}>
-                  KYC {detailsClient.kycStatus}
+                <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${kycStyles[detailsKyc.status]}`}>
+                  KYC {detailsKyc.status}
                 </span>
               </div>
 
@@ -364,14 +401,71 @@ const Clients = () => {
                 </div>
               </div>
 
+              {/* KYC Status & Checklist */}
+              <div>
+                <h3 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+                  <Shield className="w-4 h-4 text-primary" /> KYC Status & Checklist
+                </h3>
+                <div className="space-y-3 p-4 bg-muted/30 border border-border rounded-lg">
+                  <div>
+                    <label className="block text-xs text-muted-foreground mb-1">KYC Status</label>
+                    <select
+                      value={detailsKyc.status}
+                      onChange={e => setDetailsKyc(prev => ({ ...prev, status: e.target.value as DetailsKyc['status'] }))}
+                      className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50">
+                      <option value="Pending">Pending</option>
+                      <option value="Approved">Approved</option>
+                      <option value="Rejected">Rejected</option>
+                    </select>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-1.5">
+                    {[
+                      { key: 'idVerified', label: 'ID Document Verified' },
+                      { key: 'addressVerified', label: 'Proof of Address Verified' },
+                      { key: 'pepScreening', label: 'PEP Screening Completed' },
+                      { key: 'sanctionsCheck', label: 'Sanctions / Watchlist Check' },
+                      { key: 'sourceOfFunds', label: 'Source of Funds Verified' },
+                    ].map(item => (
+                      <label key={item.key} className="flex items-center gap-3 py-1 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={(detailsKyc.checklist as any)[item.key]}
+                          onChange={e => setDetailsKyc(prev => ({
+                            ...prev,
+                            checklist: { ...prev.checklist, [item.key]: e.target.checked },
+                          }))}
+                          className="w-4 h-4 rounded border-border text-primary focus:ring-primary/50" />
+                        <span className="text-sm text-foreground">{item.label}</span>
+                      </label>
+                    ))}
+                  </div>
+
+                  <div>
+                    <label className="block text-xs text-muted-foreground mb-1">Checklist Notes</label>
+                    <textarea
+                      value={detailsKyc.notes}
+                      onChange={e => setDetailsKyc(prev => ({ ...prev, notes: e.target.value }))}
+                      placeholder="Add KYC review notes..."
+                      className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 min-h-[80px]" />
+                  </div>
+
+                  {detailsClient.kycUpdatedAt && (
+                    <p className="text-xs text-muted-foreground">
+                      Last updated by {detailsClient.kycUpdatedBy ?? 'Unknown'} · {new Date(detailsClient.kycUpdatedAt).toLocaleString()}
+                    </p>
+                  )}
+                </div>
+              </div>
+
               <div className="flex gap-3 pt-2">
                 <button onClick={() => { setDetailsOpen(false); openEditDialog(detailsClient); }}
                   className="flex-1 flex items-center justify-center gap-2 py-2.5 border border-border rounded-lg font-medium text-sm hover:bg-muted/50">
                   <Pencil className="w-4 h-4" /> Edit Client
                 </button>
-                <button onClick={() => { setDetailsOpen(false); openKycDialog(detailsClient); }}
+                <button onClick={handleSaveDetailsKyc}
                   className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium text-sm hover:bg-primary/90">
-                  <Shield className="w-4 h-4" /> KYC Review
+                  <CheckCircle className="w-4 h-4" /> Save KYC
                 </button>
               </div>
             </div>
@@ -543,7 +637,7 @@ const Clients = () => {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-center gap-2">
-                      <button onClick={() => { setDetailsClient(c); setDetailsOpen(true); }}
+                      <button onClick={() => openDetailsDialog(c)}
                         className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-foreground border border-border rounded-lg hover:bg-muted/50 transition-colors"
                         title="View details">
                         <Eye className="w-3 h-3" /> View
