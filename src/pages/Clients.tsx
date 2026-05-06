@@ -475,7 +475,10 @@ const Clients = () => {
               </div>
 
               <div className="flex gap-3 pt-2">
-                <button onClick={() => { setDetailsOpen(false); openEditDialog(detailsClient); }}
+                <button onClick={() => {
+                  if (isDetailsKycDirty() && !window.confirm('You have unsaved KYC changes. Discard and continue?')) return;
+                  setDetailsOpen(false); setDetailsClient(null); openEditDialog(detailsClient);
+                }}
                   className="flex-1 flex items-center justify-center gap-2 py-2.5 border border-border rounded-lg font-medium text-sm hover:bg-muted/50">
                   <Pencil className="w-4 h-4" /> Edit Client
                 </button>
