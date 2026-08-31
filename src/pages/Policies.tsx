@@ -1,7 +1,30 @@
-import { useState } from 'react';
-import { Search, ArrowRight } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Search, ArrowRight, Eye } from 'lucide-react';
 import { useData } from '@/contexts/DataContext';
 import { useToast } from '@/hooks/use-toast';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Policy } from '@/lib/types';
+
+// Reducing balance (amortising) sum assured — outstanding balance after k months
+function reducingSchedule(sumAssured: number, termYears: number, annualRatePct: number) {
+  const n = Math.max(1, Math.round(termYears * 12));
+  const i = annualRatePct / 100 / 12;
+  const rows: { month: number; opening: number; closing: number }[] = [];
+  let opening = sumAssured;
+  for (let k = 1; k <= n; k++) {
+    let closing: number;
+    if (i === 0) {
+      closing = sumAssured * (1 - k / n);
+    } else {
+      const f = Math.pow(1 + i, n);
+      closing = (sumAssured * (f - Math.pow(1 + i, k))) / (f - 1);
+    }
+    closing = Math.max(0, closing);
+    rows.push({ month: k, opening, closing });
+    opening = closing;
+  }
+  return rows;
+}
 
 const statusStyles: Record<string, string> = {
   Active: 'status-active',
