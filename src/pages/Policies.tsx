@@ -21,19 +21,26 @@ const Policies = () => {
     if (!proposal) return;
     const quot = quotations.find(q => q.quotRef === proposal.quotRef);
     const policyNo = `PL-2026-${String(policies.length + 1).padStart(4, '0')}`;
+    const seq = String(policies.length + 1).padStart(4, '0');
+    const invoiceNo = `INV-2026-${seq}`;
+    const term = quot?.term || 10;
     const today = new Date().toISOString().split('T')[0];
     const expiry = new Date();
-    expiry.setFullYear(expiry.getFullYear() + 10);
+    expiry.setFullYear(expiry.getFullYear() + term);
+    // Single upfront invoice for the entire policy term
+    const fullTermPremium = quot?.totalPremium || 0;
     setPolicies(prev => [...prev, {
       id: String(policies.length + 1), policyNo, proposalNo: proposal.proposalNo,
       clientName: proposal.clientName, policyHolder: proposal.clientName,
       productName: quot?.productName || 'N/A',
-      sumAssured: quot?.sumAssured || 0, totalPremium: quot?.totalPremium || 0,
+      sumAssured: quot?.sumAssured || 0, totalPremium: fullTermPremium,
+      annualPremium: quot?.annualPremium, term,
+      invoiceNo, invoiceDate: today,
       premiumFrequency: proposal.premiumFrequency,
       commencementDate: today, expiryDate: expiry.toISOString().split('T')[0], status: 'Active' as const,
     }]);
     setProposals(prev => prev.map(p => p.id === proposalId ? { ...p, status: 'Policy Issued' as const } : p));
-    toast({ title: 'Policy issued', description: `${proposal.proposalNo} → ${policyNo}` });
+    toast({ title: 'Policy issued', description: `${policyNo} — invoice ${invoiceNo} for OMR ${fullTermPremium.toFixed(3)} (${term} yrs, payable upfront)` });
   };
 
   const filtered = policies.filter(p =>
