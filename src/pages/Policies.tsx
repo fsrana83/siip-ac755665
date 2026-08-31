@@ -160,7 +160,9 @@ const Policies = () => {
                 <th className="text-left px-4 py-3">Frequency</th>
                 <th className="text-left px-4 py-3">Commencement</th>
                 <th className="text-left px-4 py-3">Expiry</th>
+                <th className="text-right px-4 py-3">Interest %</th>
                 <th className="text-left px-4 py-3">Status</th>
+                <th className="text-center px-4 py-3">Details</th>
               </tr>
             </thead>
             <tbody>
@@ -177,8 +179,15 @@ const Policies = () => {
                   <td className="px-4 py-3"><span className="px-2 py-0.5 bg-accent text-accent-foreground rounded-full text-xs font-medium">{p.premiumFrequency}</span></td>
                   <td className="px-4 py-3 text-sm text-muted-foreground">{p.commencementDate}</td>
                   <td className="px-4 py-3 text-sm text-muted-foreground">{p.expiryDate}</td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground text-right">{p.interestRate != null ? `${p.interestRate.toFixed(2)}%` : '—'}</td>
                   <td className="px-4 py-3">
                     <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statusStyles[p.status] || 'status-active'}`}>{p.status}</span>
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <button onClick={() => openDetails(p)}
+                      className="px-2.5 py-1 border border-border rounded-lg text-xs font-medium hover:bg-muted transition-colors inline-flex items-center gap-1">
+                      <Eye className="w-3 h-3" /> View
+                    </button>
                   </td>
                 </tr>
               ))}
