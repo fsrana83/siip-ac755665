@@ -195,6 +195,73 @@ const Policies = () => {
           </table>
         </div>
       </div>
+
+      {/* Policy Details */}
+      <Dialog open={!!current} onOpenChange={(o) => !o && setDetailPolicy(null)}>
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Policy Details — {current?.policyNo}</DialogTitle>
+          </DialogHeader>
+          {current && (
+            <div className="space-y-5">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                {[
+                  ['Client', current.clientName],
+                  ['Policy Holder', current.policyHolder],
+                  ['Product', current.productName],
+                  ['Sum Assured', `OMR ${current.sumAssured.toLocaleString()}`],
+                  ['Term', current.term ? `${current.term} yrs` : '—'],
+                  ['Total Premium (Full Term)', `OMR ${current.totalPremium.toFixed(3)}`],
+                  ['Invoice No', current.invoiceNo || '—'],
+                  ['Commencement', current.commencementDate],
+                  ['Expiry', current.expiryDate],
+                ].map(([label, value]) => (
+                  <div key={label as string}>
+                    <p className="text-xs text-muted-foreground">{label}</p>
+                    <p className="text-foreground font-medium">{value}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex items-end gap-3 p-4 rounded-lg bg-muted/40 border border-border/50">
+                <div>
+                  <label className="text-xs text-muted-foreground">Interest Rate (% p.a.)</label>
+                  <input type="number" step="0.01" min="0" value={rateInput} onChange={e => setRateInput(e.target.value)}
+                    className="mt-1 w-32 px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                </div>
+                <button onClick={saveRate}
+                  className="px-3 py-2 bg-primary text-primary-foreground rounded-lg text-xs font-medium hover:bg-primary/90 transition-colors">
+                  Save Rate
+                </button>
+                <p className="text-xs text-muted-foreground ml-auto">Reducing sum assured on a monthly amortising basis</p>
+              </div>
+
+              <div className="border border-border/50 rounded-lg overflow-hidden">
+                <div className="max-h-72 overflow-y-auto">
+                  <table className="w-full">
+                    <thead className="sticky top-0 bg-muted">
+                      <tr className="table-header">
+                        <th className="text-left px-4 py-2">Month</th>
+                        <th className="text-right px-4 py-2">Opening Sum Assured</th>
+                        <th className="text-right px-4 py-2">Closing Sum Assured</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {schedule.map(r => (
+                        <tr key={r.month} className="border-b border-border/30">
+                          <td className="px-4 py-2 text-sm text-muted-foreground">{r.month}</td>
+                          <td className="px-4 py-2 text-sm text-foreground text-right">OMR {r.opening.toFixed(3)}</td>
+                          <td className="px-4 py-2 text-sm text-foreground text-right">OMR {r.closing.toFixed(3)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
