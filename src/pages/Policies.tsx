@@ -35,6 +35,26 @@ const Policies = () => {
   const [search, setSearch] = useState('');
   const { policies, setPolicies, proposals, setProposals, quotations } = useData();
   const { toast } = useToast();
+  const [detailPolicy, setDetailPolicy] = useState<Policy | null>(null);
+  const [rateInput, setRateInput] = useState('0');
+
+  const current = detailPolicy ? policies.find(p => p.id === detailPolicy.id) || detailPolicy : null;
+  const schedule = useMemo(() => {
+    if (!current) return [];
+    return reducingSchedule(current.sumAssured, current.term || 10, parseFloat(rateInput) || 0);
+  }, [current, rateInput]);
+
+  const openDetails = (p: Policy) => {
+    setDetailPolicy(p);
+    setRateInput(String(p.interestRate ?? 0));
+  };
+
+  const saveRate = () => {
+    if (!current) return;
+    const rate = parseFloat(rateInput) || 0;
+    setPolicies(prev => prev.map(p => p.id === current.id ? { ...p, interestRate: rate } : p));
+    toast({ title: 'Interest rate saved', description: `${current.policyNo} — ${rate}% p.a.` });
+  };
 
   // Credit Approved proposals not yet issued
   const creditApproved = proposals.filter(p => p.status === 'Credit Approved');
