@@ -84,13 +84,13 @@ const Quotations = () => {
 
   const handleCreateQuotation = () => {
     if (!selectedClient || !selectedProduct || !premium) return;
-    const freqPremium = premiumFrequency === 'Single' ? premium.totalPremium : premium.annualPremium / FREQUENCY_DIVISORS[premiumFrequency];
     const newQ: Quotation = {
       id: String(quotations.length + 1),
       quotRef: `QT-2026-${String(quotations.length + 1).padStart(4, '0')}`,
       clientName: selectedClient.fullName,
       productName: selectedProduct.name,
-      sumAssured, totalPremium: premium.annualPremium,
+      sumAssured, totalPremium: premium.totalPremium,
+      annualPremium: premium.annualPremium, term,
       premiumFrequency,
       status: 'Draft', createdBy: 'admin',
       createdAt: new Date().toISOString().split('T')[0],
@@ -414,8 +414,8 @@ const Quotations = () => {
                       <span className="text-primary">OMR {premium.annualPremium.toFixed(3)}</span>
                     </div>
                     <div className="flex justify-between px-4 py-2 text-sm text-muted-foreground">
-                      <span>Total Premium ({term} years)</span>
-                      <span className="text-foreground font-semibold">OMR {premium.totalPremium.toFixed(3)}</span>
+                      <span className="font-semibold text-foreground">Total Premium — {term} years (payable upfront)</span>
+                      <span className="text-primary font-bold">OMR {premium.totalPremium.toFixed(3)}</span>
                     </div>
                   </div>
                 </div>
@@ -453,7 +453,7 @@ const Quotations = () => {
                 <th className="text-left px-4 py-3">Client</th>
                 <th className="text-left px-4 py-3">Product</th>
                 <th className="text-right px-4 py-3">Sum Assured</th>
-                <th className="text-right px-4 py-3">Annual Premium</th>
+                <th className="text-right px-4 py-3">Total Premium (Full Term)</th>
                 <th className="text-left px-4 py-3">Frequency</th>
                 <th className="text-left px-4 py-3">Status</th>
                 <th className="text-left px-4 py-3">Date</th>
@@ -537,7 +537,7 @@ const Quotations = () => {
                 <p><span className="text-muted-foreground">Client:</span> <span className="text-foreground font-medium">{convertQuotation.clientName}</span></p>
                 <p><span className="text-muted-foreground">Product:</span> <span className="text-foreground">{convertQuotation.productName}</span></p>
                 <p><span className="text-muted-foreground">Sum Assured:</span> <span className="text-foreground">OMR {convertQuotation.sumAssured.toLocaleString()}</span></p>
-                <p><span className="text-muted-foreground">Annual Premium:</span> <span className="text-foreground font-bold">OMR {convertQuotation.totalPremium.toFixed(3)}</span></p>
+                <p><span className="text-muted-foreground">Total Premium (Full Term):</span> <span className="text-foreground font-bold">OMR {convertQuotation.totalPremium.toFixed(3)}</span></p>
               </div>
 
               {medicalStep === 0 ? (
@@ -616,7 +616,7 @@ const Quotations = () => {
             <form onSubmit={handleAddReceipt} className="space-y-4">
               <div className="p-3 bg-muted/30 border border-border rounded-lg text-xs space-y-1">
                 <p><span className="text-muted-foreground">Client:</span> <span className="text-foreground font-medium">{receiptQuotation.clientName}</span></p>
-                <p><span className="text-muted-foreground">Annual Premium:</span> <span className="text-foreground font-semibold">OMR {receiptQuotation.totalPremium.toFixed(3)}</span></p>
+                <p><span className="text-muted-foreground">Total Premium (Full Term):</span> <span className="text-foreground font-semibold">OMR {receiptQuotation.totalPremium.toFixed(3)}</span></p>
                 <p className="text-amber-600">Receipts will require Credit Controller approval before issuance.</p>
               </div>
               <div className="grid grid-cols-2 gap-3">

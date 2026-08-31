@@ -39,7 +39,9 @@ export interface Quotation {
   clientName: string;
   productName: string;
   sumAssured: number;
-  totalPremium: number;
+  totalPremium: number; // full-term premium, invoiced upfront
+  annualPremium?: number;
+  term?: number;
   premiumFrequency: PremiumFrequency;
   status: 'Draft' | 'Converted' | 'Void';
   createdBy: string;
@@ -106,7 +108,11 @@ export interface Policy {
   policyHolder: string;
   productName: string;
   sumAssured: number;
-  totalPremium: number;
+  totalPremium: number; // full-term premium, invoiced upfront at issuance
+  annualPremium?: number;
+  term?: number;
+  invoiceNo?: string;
+  invoiceDate?: string;
   premiumFrequency: PremiumFrequency;
   commencementDate: string;
   expiryDate: string;
