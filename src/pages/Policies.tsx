@@ -1,7 +1,30 @@
-import { useState } from 'react';
-import { Search, ArrowRight } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Search, ArrowRight, Eye } from 'lucide-react';
 import { useData } from '@/contexts/DataContext';
 import { useToast } from '@/hooks/use-toast';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Policy } from '@/lib/types';
+
+// Reducing balance (amortising) sum assured — outstanding balance after k months
+function reducingSchedule(sumAssured: number, termYears: number, annualRatePct: number) {
+  const n = Math.max(1, Math.round(termYears * 12));
+  const i = annualRatePct / 100 / 12;
+  const rows: { month: number; opening: number; closing: number }[] = [];
+  let opening = sumAssured;
+  for (let k = 1; k <= n; k++) {
+    let closing: number;
+    if (i === 0) {
+      closing = sumAssured * (1 - k / n);
+    } else {
+      const f = Math.pow(1 + i, n);
+      closing = (sumAssured * (f - Math.pow(1 + i, k))) / (f - 1);
+    }
+    closing = Math.max(0, closing);
+    rows.push({ month: k, opening, closing });
+    opening = closing;
+  }
+  return rows;
+}
 
 const statusStyles: Record<string, string> = {
   Active: 'status-active',
@@ -12,6 +35,26 @@ const Policies = () => {
   const [search, setSearch] = useState('');
   const { policies, setPolicies, proposals, setProposals, quotations } = useData();
   const { toast } = useToast();
+  const [detailPolicy, setDetailPolicy] = useState<Policy | null>(null);
+  const [rateInput, setRateInput] = useState('0');
+
+  const current = detailPolicy ? policies.find(p => p.id === detailPolicy.id) || detailPolicy : null;
+  const schedule = useMemo(() => {
+    if (!current) return [];
+    return reducingSchedule(current.sumAssured, current.term || 10, parseFloat(rateInput) || 0);
+  }, [current, rateInput]);
+
+  const openDetails = (p: Policy) => {
+    setDetailPolicy(p);
+    setRateInput(String(p.interestRate ?? 0));
+  };
+
+  const saveRate = () => {
+    if (!current) return;
+    const rate = parseFloat(rateInput) || 0;
+    setPolicies(prev => prev.map(p => p.id === current.id ? { ...p, interestRate: rate } : p));
+    toast({ title: 'Interest rate saved', description: `${current.policyNo} — ${rate}% p.a.` });
+  };
 
   // Credit Approved proposals not yet issued
   const creditApproved = proposals.filter(p => p.status === 'Credit Approved');
@@ -117,7 +160,9 @@ const Policies = () => {
                 <th className="text-left px-4 py-3">Frequency</th>
                 <th className="text-left px-4 py-3">Commencement</th>
                 <th className="text-left px-4 py-3">Expiry</th>
+                <th className="text-right px-4 py-3">Interest %</th>
                 <th className="text-left px-4 py-3">Status</th>
+                <th className="text-center px-4 py-3">Details</th>
               </tr>
             </thead>
             <tbody>
@@ -134,8 +179,15 @@ const Policies = () => {
                   <td className="px-4 py-3"><span className="px-2 py-0.5 bg-accent text-accent-foreground rounded-full text-xs font-medium">{p.premiumFrequency}</span></td>
                   <td className="px-4 py-3 text-sm text-muted-foreground">{p.commencementDate}</td>
                   <td className="px-4 py-3 text-sm text-muted-foreground">{p.expiryDate}</td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground text-right">{p.interestRate != null ? `${p.interestRate.toFixed(2)}%` : '—'}</td>
                   <td className="px-4 py-3">
                     <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${statusStyles[p.status] || 'status-active'}`}>{p.status}</span>
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <button onClick={() => openDetails(p)}
+                      className="px-2.5 py-1 border border-border rounded-lg text-xs font-medium hover:bg-muted transition-colors inline-flex items-center gap-1">
+                      <Eye className="w-3 h-3" /> View
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -143,6 +195,73 @@ const Policies = () => {
           </table>
         </div>
       </div>
+
+      {/* Policy Details */}
+      <Dialog open={!!current} onOpenChange={(o) => !o && setDetailPolicy(null)}>
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Policy Details — {current?.policyNo}</DialogTitle>
+          </DialogHeader>
+          {current && (
+            <div className="space-y-5">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                {[
+                  ['Client', current.clientName],
+                  ['Policy Holder', current.policyHolder],
+                  ['Product', current.productName],
+                  ['Sum Assured', `OMR ${current.sumAssured.toLocaleString()}`],
+                  ['Term', current.term ? `${current.term} yrs` : '—'],
+                  ['Total Premium (Full Term)', `OMR ${current.totalPremium.toFixed(3)}`],
+                  ['Invoice No', current.invoiceNo || '—'],
+                  ['Commencement', current.commencementDate],
+                  ['Expiry', current.expiryDate],
+                ].map(([label, value]) => (
+                  <div key={label as string}>
+                    <p className="text-xs text-muted-foreground">{label}</p>
+                    <p className="text-foreground font-medium">{value}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex items-end gap-3 p-4 rounded-lg bg-muted/40 border border-border/50">
+                <div>
+                  <label className="text-xs text-muted-foreground">Interest Rate (% p.a.)</label>
+                  <input type="number" step="0.01" min="0" value={rateInput} onChange={e => setRateInput(e.target.value)}
+                    className="mt-1 w-32 px-3 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
+                </div>
+                <button onClick={saveRate}
+                  className="px-3 py-2 bg-primary text-primary-foreground rounded-lg text-xs font-medium hover:bg-primary/90 transition-colors">
+                  Save Rate
+                </button>
+                <p className="text-xs text-muted-foreground ml-auto">Reducing sum assured on a monthly amortising basis</p>
+              </div>
+
+              <div className="border border-border/50 rounded-lg overflow-hidden">
+                <div className="max-h-72 overflow-y-auto">
+                  <table className="w-full">
+                    <thead className="sticky top-0 bg-muted">
+                      <tr className="table-header">
+                        <th className="text-left px-4 py-2">Month</th>
+                        <th className="text-right px-4 py-2">Opening Sum Assured</th>
+                        <th className="text-right px-4 py-2">Closing Sum Assured</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {schedule.map(r => (
+                        <tr key={r.month} className="border-b border-border/30">
+                          <td className="px-4 py-2 text-sm text-muted-foreground">{r.month}</td>
+                          <td className="px-4 py-2 text-sm text-foreground text-right">OMR {r.opening.toFixed(3)}</td>
+                          <td className="px-4 py-2 text-sm text-foreground text-right">OMR {r.closing.toFixed(3)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

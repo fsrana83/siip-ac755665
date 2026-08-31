@@ -101,7 +101,7 @@ const initialVATEntries: VATEntry[] = COVER_TYPES.map((ct, i) => ({
 
 const initialProducts: ProductConfig[] = DEFAULT_PRODUCTS.map(p => ({
   ...p,
-  allowedFrequencies: ['Annual', 'Semi-Annual', 'Quarterly', 'Monthly'] as PremiumFrequency[],
+  allowedFrequencies: ['Annual', 'Semi-Annual', 'Quarterly', 'Monthly', 'Single'] as PremiumFrequency[],
   calcMethod: 'Rate per Mille' as const,
   medicalSAThreshold: 100000,
 }));
