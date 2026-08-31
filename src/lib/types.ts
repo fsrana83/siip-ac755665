@@ -113,6 +113,7 @@ export interface Policy {
   term?: number;
   invoiceNo?: string;
   invoiceDate?: string;
+  interestRate?: number; // annual % used for reducing sum assured schedule
   premiumFrequency: PremiumFrequency;
   commencementDate: string;
   expiryDate: string;

@@ -51,7 +51,7 @@ const Admin = () => {
       ptdRates: { '18-25': 0.3, '26-30': 0.4, '31-35': 0.5, '36-40': 0.7, '41-45': 0.9, '46-50': 1.3, '51-55': 1.7, '56-60': 2.3 },
       cyberRate: 0.3,
       active: true,
-      allowedFrequencies: ['Annual', 'Semi-Annual', 'Quarterly', 'Monthly'],
+      allowedFrequencies: ['Annual', 'Semi-Annual', 'Quarterly', 'Monthly', 'Single'],
       calcMethod: 'Rate per Mille',
       medicalSAThreshold: 100000,
     });
