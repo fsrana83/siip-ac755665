@@ -52,7 +52,7 @@ const Policies = () => {
     <div className="space-y-6 animate-fade-in">
       <div>
         <h1 className="text-2xl font-display font-bold text-foreground">Policies</h1>
-        <p className="text-sm text-muted-foreground mt-1">Active policies and policy issuance</p>
+        <p className="text-sm text-muted-foreground mt-1">Active policies and policy issuance — full-term premium invoiced upfront</p>
       </div>
 
       {/* Pending Policy Issuance */}
@@ -68,7 +68,7 @@ const Policies = () => {
                   <th className="text-left px-4 py-3">Proposal No</th>
                   <th className="text-left px-4 py-3">Client</th>
                   <th className="text-left px-4 py-3">Quotation</th>
-                  <th className="text-right px-4 py-3">Premium</th>
+                  <th className="text-right px-4 py-3">Premium (Full Term)</th>
                   <th className="text-center px-4 py-3">Action</th>
                 </tr>
               </thead>
@@ -111,7 +111,9 @@ const Policies = () => {
                 <th className="text-left px-4 py-3">Policy Holder</th>
                 <th className="text-left px-4 py-3">Product</th>
                 <th className="text-right px-4 py-3">Sum Assured</th>
-                <th className="text-right px-4 py-3">Premium</th>
+                <th className="text-center px-4 py-3">Term</th>
+                <th className="text-right px-4 py-3">Total Premium (Full Term)</th>
+                <th className="text-left px-4 py-3">Invoice No</th>
                 <th className="text-left px-4 py-3">Frequency</th>
                 <th className="text-left px-4 py-3">Commencement</th>
                 <th className="text-left px-4 py-3">Expiry</th>
@@ -126,7 +128,9 @@ const Policies = () => {
                   <td className="px-4 py-3 text-sm text-foreground">{p.policyHolder}</td>
                   <td className="px-4 py-3 text-sm text-muted-foreground">{p.productName}</td>
                   <td className="px-4 py-3 text-sm text-foreground text-right">OMR {p.sumAssured.toLocaleString()}</td>
-                  <td className="px-4 py-3 text-sm text-foreground text-right">OMR {p.totalPremium.toFixed(3)}</td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground text-center">{p.term ? `${p.term} yrs` : '—'}</td>
+                  <td className="px-4 py-3 text-sm text-foreground text-right font-semibold">OMR {p.totalPremium.toFixed(3)}</td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground">{p.invoiceNo || '—'}</td>
                   <td className="px-4 py-3"><span className="px-2 py-0.5 bg-accent text-accent-foreground rounded-full text-xs font-medium">{p.premiumFrequency}</span></td>
                   <td className="px-4 py-3 text-sm text-muted-foreground">{p.commencementDate}</td>
                   <td className="px-4 py-3 text-sm text-muted-foreground">{p.expiryDate}</td>
